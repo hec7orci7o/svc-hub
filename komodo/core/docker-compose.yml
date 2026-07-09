@@ -1,0 +1,61 @@
+# Komodo Core v2 deployment for lab53 — Core + Mongo + local Periphery.
+# Based literally on https://github.com/moghtech/komodo/blob/main/compose/mongo.compose.yaml
+# Copy this directory to lab53, create .env from .env.example,
+# then run: docker compose up -d
+# (docker compose loads ./.env automatically, both to interpolate ${VARS}
+# here and to inject them into the container via env_file: ./.env)
+
+services:
+  mongo:
+    image: mongo
+    labels:
+      komodo.skip: # prevents Komodo from stopping this container via StopAllContainers
+    command: --quiet --wiredTigerCacheSizeGB 0.25
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+      - mongo-config:/data/configdb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${KOMODO_DATABASE_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${KOMODO_DATABASE_PASSWORD}
+
+  core:
+    # Pinned literal tag (not an env var) so Renovate can see and bump it directly.
+    # Must stay in lockstep with periphery's tag below — Komodo releases Core and
+    # Periphery together with matching versions.
+    image: ghcr.io/moghtech/komodo-core:2.2.0
+    init: true
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    ports:
+      - "9120:9120"
+    env_file: ./.env
+    environment:
+      KOMODO_DATABASE_ADDRESS: mongo:27017
+    volumes:
+      - keys:/config/keys
+      - ${COMPOSE_KOMODO_BACKUPS_PATH}:/backups
+      # - /path/to/syncs:/syncs
+
+  # Periphery for the lab53 host itself (so Komodo also monitors/manages it).
+  # For the rest of the Raspberry Pi fleet, use the setup-periphery.py systemd
+  # script (see ../CONNECT-SERVERS.md) — Komodo's recommended method for remote hosts.
+  periphery:
+    # Must stay in lockstep with core's tag above.
+    image: ghcr.io/moghtech/komodo-periphery:2.2.0
+    init: true
+    restart: unless-stopped
+    depends_on:
+      - core
+    env_file: ./.env
+    volumes:
+      - keys:/config/keys
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /proc:/proc
+      - ${PERIPHERY_ROOT_DIRECTORY:-/etc/komodo}:${PERIPHERY_ROOT_DIRECTORY:-/etc/komodo}
+
+volumes:
+  mongo-data:
+  mongo-config:
+  keys:

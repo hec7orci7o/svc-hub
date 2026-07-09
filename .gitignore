@@ -1,0 +1,14 @@
+# Env (.env already covers komodo/core/.env, n8n/.env, cloudflared/.env — the
+# pattern matches any subfolder)
+.env
+*.env.local
+
+# Runtime data (bind mounts created on the host at deploy time)
+n8n/local-files/
+
+# OS
+.DS_Store
+
+# Editors
+.vscode/
+.idea/

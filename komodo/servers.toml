@@ -1,0 +1,68 @@
+# Server definitions as code (schema confirmed at https://komo.do/docs/automate/sync-resources).
+#
+# v2 NOTE: Periphery connects in outbound mode (websocket out to Core, see
+# komodo/core/.env.example and komodo/CONNECT-SERVERS.md), not the classic inbound
+# mode where Core dials `address`. It hasn't been confirmed live whether `address`
+# is still required/used in outbound mode or is a vestige of v1 — verify against
+# your Core's real schema (`/schema/resources.json`) before relying on it.
+#
+# Addresses use <name>.local (mDNS/Avahi, on by default on Raspberry Pi OS) instead of
+# raw LAN IPs, so this repo can be public without publishing real network details.
+#
+# "lab53" is also auto-created on Core's first boot
+# (KOMODO_FIRST_SERVER_NAME=lab53 in .env), so this block must stay in sync with
+# those values so the ResourceSync doesn't detect a diff.
+
+[[server]]
+name = "lab53"
+description = "Raspberry Pi running Komodo Core + Periphery + cloudflared"
+tags = ["core"]
+
+[server.config]
+address = "http://lab53.local:8120"
+enabled = true
+
+[[server]]
+name = "lab54"
+description = "Raspberry Pi (fleet)"
+tags = ["fleet"]
+
+[server.config]
+address = "http://lab54.local:8120"
+enabled = true
+
+[[server]]
+name = "lab55"
+description = "Raspberry Pi (fleet)"
+tags = ["fleet"]
+
+[server.config]
+address = "http://lab55.local:8120"
+enabled = true
+
+[[server]]
+name = "lab56"
+description = "Raspberry Pi — runs n8n"
+tags = ["fleet"]
+
+[server.config]
+address = "http://lab56.local:8120"
+enabled = true
+
+[[server]]
+name = "lab57"
+description = "Raspberry Pi (fleet)"
+tags = ["fleet"]
+
+[server.config]
+address = "http://lab57.local:8120"
+enabled = true
+
+[[server]]
+name = "lab58"
+description = "Raspberry Pi (fleet)"
+tags = ["fleet"]
+
+[server.config]
+address = "http://lab58.local:8120"
+enabled = true
