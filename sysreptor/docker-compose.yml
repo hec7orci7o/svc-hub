@@ -1,0 +1,90 @@
+# SysReptor — pentest reporting platform (syslifters/sysreptor image) on lab58.
+# Deploy-only, same pattern as every other service in this hub — no build of our own.
+# Note: upstream's own install.sh generates a compose with `build: ../../` next to
+# `image:`, which builds the image locally instead of just pulling it. Omitted here on
+# purpose — `image:` alone pulls the exact same tag they publish on Docker Hub.
+# Copy .env.example to .env and fill it in before:
+#   docker compose up -d
+
+services:
+  db:
+    image: postgres:14
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-reportcreator}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Please set POSTGRES_PASSWORD in .env file}
+      POSTGRES_DB: ${POSTGRES_DB:-reportcreator}
+      PGDATA: /data
+    volumes:
+      - db-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-reportcreator}"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    # No cap_drop here: same startup chown/setuid exception as Mongo/Postgres elsewhere
+    # in this hub (komodo/core, odoo/, scanopy/) — official entrypoint needs it to init
+    # the data dir.
+    security_opt:
+      - no-new-privileges:true
+
+  redis:
+    image: redis:8.0-alpine
+    restart: unless-stopped
+    command: sh -c 'exec redis-server --requirepass "$$REDIS_PASSWORD"'
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Please set REDIS_PASSWORD in .env file}
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  app:
+    # Pinned literal tag (not an env var) so Renovate can see and bump it directly.
+    image: syslifters/sysreptor:2026.50
+    restart: unless-stopped
+    init: true
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    env_file: ./.env
+    environment:
+      DATABASE_HOST: db
+      DATABASE_NAME: ${POSTGRES_DB:-reportcreator}
+      DATABASE_USER: ${POSTGRES_USER:-reportcreator}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?Please set POSTGRES_PASSWORD in .env file}
+      DATABASE_PORT: 5432
+      REDIS_URL: redis://:${REDIS_PASSWORD:?Please set REDIS_PASSWORD in .env file}@redis:6379/0
+    volumes:
+      - app-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/public/utils/healthcheck/"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+volumes:
+  db-data:
+  app-data:

@@ -1,0 +1,17 @@
+# Schema confirmed at https://komo.do/docs/automate/sync-resources
+#
+# Deploy-only, like every service in this hub: redeploy is triggered by a GitHub
+# webhook pointed directly at this Stack's /deploy listener (copy the URL from
+# the Komodo UI, Stack Config > Webhooks). No build, no GitHub Actions workflow involved.
+
+[[stack]]
+name = "cups"
+description = "CUPS/AirPrint bridge (drpsychick/airprint-bridge image)"
+tags = ["cups"]
+
+[stack.config]
+server = "lab56"
+git_provider = "github.com"
+repo = "hec7orci7o/svc-hub"
+branch = "main"
+file_paths = ["cups/docker-compose.yml"]

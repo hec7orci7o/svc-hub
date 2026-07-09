@@ -5,6 +5,11 @@
 
 # Runtime data (bind mounts created on the host at deploy time)
 n8n/local-files/
+odoo/addons/
+odoo/config/
+trek/data/
+trek/uploads/
+scanopy/data/
 
 # OS
 .DS_Store

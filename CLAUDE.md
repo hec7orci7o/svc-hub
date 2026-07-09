@@ -8,11 +8,11 @@ Raspberry Pi boards. See `README.md` for a getting-started cheatsheet.
 | Name | Role |
 |---|---|
 | `lab53` | Komodo Core + Periphery + cloudflared |
-| `lab54` | Periphery (fleet) |
-| `lab55` | Periphery (fleet) |
-| `lab56` | Periphery — runs n8n |
-| `lab57` | Periphery (fleet) |
-| `lab58` | Periphery (fleet) |
+| `lab54` | Periphery — runs TREK |
+| `lab55` | Periphery — runs Odoo |
+| `lab56` | Periphery — runs n8n, cups |
+| `lab57` | Periphery — runs scanopy |
+| `lab58` | Periphery — runs sysreptor, bloodhound-ce |
 
 Declared as code in `komodo/servers.toml`, addressed by `<name>.local` (mDNS/Avahi, on by
 default on Raspberry Pi OS) rather than raw LAN IPs — this repo is public, so no real network
@@ -113,7 +113,11 @@ needed; GitHub runs the scans, no container to maintain. It covers by default an
 service folder) — see the coverage rule above for why versions must be pinned as literals in
 compose. For Komodo, majors (e.g. `:2` → `:3`) still skip automerge via the existing
 `packageRule` — intentional, since a Komodo major can bring incompatible changes that need
-manual review.
+manual review. scanopy's daemon/server images get their own extra `packageRule` that also
+excludes minors from automerge — they're pre-1.0, where a semver minor isn't guaranteed
+backwards-compatible. `bloodhound-ce/`'s `neo4j` image gets the same minor-automerge exclusion,
+scoped to that file only, since it's pinned to the 4.4 line for BloodHound CE's graph schema
+rather than for architecture/stability reasons.
 
 **Manual step not yet done:** `platformAutomerge: true` in `renovate.json` requires "Allow
 auto-merge" to be enabled in the GitHub repo settings (Settings > General > Pull Requests).
@@ -137,6 +141,75 @@ the `cloudflared/` tunnel on lab53 is what exposes it publicly, not this compose
 user is created via n8n's own signup UI (since v1.0 there's no basic auth or way to disable
 login). `N8N_ENCRYPTION_KEY` is critical: generate it once and never touch it again — changing
 it breaks decryption of already-saved credentials.
+
+## Deploying CUPS/AirPrint bridge (lab56)
+
+See `cups/docker-compose.yml` + `cups/.env.example`. Runs alongside n8n on the same board.
+Uses `network_mode: host` (AirPrint/Bonjour discovery needs real mDNS broadcasts, which don't
+cross a bridge network) and `privileged: true` (USB printer passthrough + Avahi/dbus host
+integration) — the hub's usual `no-new-privileges`/`cap_drop: ALL` baseline is skipped here on
+purpose, not by oversight (see the comment on the `cups` service). Its web admin panel must
+stay LAN-only: never give it a `cloudflared` Public Hostname rule, since `CUPS_ADMIN_PASSWORD`
+sits in plaintext in `.env`. This image tags by build date (`focal-YYYYMMDD`), not semver, so
+Renovate PRs for it need manual review rather than trusting patch/minor automerge.
+
+## Deploying Odoo (lab55)
+
+See `odoo/docker-compose.yml` + `odoo/.env.example`. Official `odoo` + `postgres` images, own
+bridge network (`odoo_network`) so Postgres isn't reachable from the LAN, only Odoo's HTTP
+(`8069`) and websocket (`8072`) ports are published. Postgres's memory tuning
+(`shared_buffers=512MB`, `effective_cache_size=2GB`) is sized for lab55's 8GB — see the comment
+on that `command:` line before moving this to a smaller board. `./addons` and `./config` are
+bind mounts for custom modules/config, created by hand on the host (same pattern as n8n's
+`local-files`), not committed.
+
+## Deploying TREK (lab54)
+
+See `trek/docker-compose.yml` + `trek/.env.example`. Official image, SQLite (no external DB),
+reachable only over the LAN by mDNS hostname (`http://lab54.local:3000`) — same public-exposure
+model as n8n, via the `cloudflared/` tunnel on lab53 if ever enabled. `ENCRYPTION_KEY` is
+critical (encrypts stored secrets: API keys, MFA, SMTP, OIDC) — generate once with
+`openssl rand -hex 32`; unlike n8n, upstream documents a rotation script if you ever need to
+change it, but treat it as permanent by default. `ADMIN_EMAIL`/`ADMIN_PASSWORD` only apply on
+first boot.
+
+## Deploying scanopy (lab57)
+
+See `scanopy/docker-compose.yml` + `scanopy/.env.example`. Three containers: `daemon` (host
+networking + `privileged: true`, needed for real LAN topology discovery — see the comment on
+that service), `postgres`, and `server` (published on `:60072`). AGPL-3.0 for self-hosted use —
+if this ever needs to run as a commercial/closed offering instead, see the licensing note in
+the compose file. Images are pinned to `v0.17.4`; the project is pre-1.0, so
+`renovate.json` carves out an explicit exception keeping its minor bumps off automerge
+(0.x minor bumps aren't guaranteed non-breaking under semver) — patch bumps still automerge
+like everything else.
+
+## Deploying SysReptor (lab58)
+
+See `sysreptor/docker-compose.yml` + `sysreptor/.env.example`. Pentest reporting platform:
+`postgres:14` + `redis:8.0-alpine` + the official `syslifters/sysreptor` app image. Upstream's
+own `install.sh` generates a compose with `build: ../../` alongside `image:`, which would
+build the image locally — deliberately omitted here so this stays deploy-only, since
+`image:` alone already pulls the exact tag they publish. Two secrets are critical:
+`SECRET_KEY` (session signing, safe to rotate — just logs everyone out) and
+`ENCRYPTION_KEYS` (encrypts findings/uploads at rest — losing every listed key makes
+existing data unrecoverable, rotate by adding a new key rather than replacing the only one).
+No license key needed for community use — `LICENSE` is Professional-tier only. Code license
+is "SysReptor Community License 1.1" (source-available, not an OSI-approved license).
+
+## Deploying BloodHound CE (lab58)
+
+See `bloodhound-ce/docker-compose.yml` + `bloodhound-ce/.env.example`. Shares lab58 with
+`sysreptor`. No `mem_limit`/JVM heap cap set on `graph-db` (Neo4j), same "no resource limits"
+reasoning as the rest of the hub — see that section above. Three containers:
+`app-db` (`postgres:18`), `graph-db` (`neo4j:4.4.42`, pinned to the 4.4 line on purpose —
+BloodHound CE's graph schema targets it, don't bump ahead of upstream; `renovate.json` blocks
+automerge on its minors accordingly), and `bloodhound` (the only one published to the LAN, on
+`:8080`). Postgres and Neo4j are intentionally **not** published to the host, unlike upstream's
+example compose — Neo4j's browser is a second attack surface with its own credentials on top
+of the BloodHound UI, and this is a tool whose whole purpose is mapping AD attack paths, so
+treat its own exposure with the same care. The initial admin password is randomized on first
+boot and printed to `docker compose logs bloodhound`, not stored in `.env`.
 
 ## Deploying cloudflared (lab53)
 
@@ -171,6 +244,26 @@ into `cloudflared/.env` first and retiring the manual one, or you'll end up runn
 - On `lab56`: copy `n8n/.env.example` to `.env`, generate `N8N_ENCRYPTION_KEY`,
   `mkdir -p local-files`, and `docker compose up -d`.
 - Configure the GitHub webhook toward the `n8n` Stack's `/deploy` in Komodo.
+- On `lab56`: copy `cups/.env.example` to `.env`, set a real `CUPS_ADMIN_PASSWORD`, and
+  `docker compose up -d`.
+- Configure the GitHub webhook toward the `cups` Stack's `/deploy` in Komodo.
+- On `lab55`: copy `odoo/.env.example` to `.env`, set a real `POSTGRES_PASSWORD`,
+  `mkdir -p addons config`, and `docker compose up -d`.
+- Configure the GitHub webhook toward the `odoo` Stack's `/deploy` in Komodo.
+- On `lab54`: copy `trek/.env.example` to `.env`, generate `ENCRYPTION_KEY`,
+  `mkdir -p data uploads`, and `docker compose up -d`.
+- Configure the GitHub webhook toward the `trek` Stack's `/deploy` in Komodo.
+- On `lab57`: copy `scanopy/.env.example` to `.env`, set a real `POSTGRES_PASSWORD`,
+  `mkdir -p data`, and `docker compose up -d`.
+- Configure the GitHub webhook toward the `scanopy` Stack's `/deploy` in Komodo.
+- On `lab58`: copy `sysreptor/.env.example` to `.env`, set real `POSTGRES_PASSWORD`,
+  `REDIS_PASSWORD`, `SECRET_KEY`, and `ENCRYPTION_KEYS`/`DEFAULT_ENCRYPTION_KEY_ID`, then
+  `docker compose up -d`.
+- Configure the GitHub webhook toward the `sysreptor` Stack's `/deploy` in Komodo.
+- Also on `lab58`: copy `bloodhound-ce/.env.example` to `.env`, set real `POSTGRES_PASSWORD`
+  and `NEO4J_SECRET`, then `docker compose up -d`. Grab the randomized admin password from
+  `docker compose logs bloodhound`.
+- Configure the GitHub webhook toward the `bloodhound-ce` Stack's `/deploy` in Komodo.
 - `cloudflared` is intentionally on hold — see "Not deployed yet, on purpose" above. When
   ready to migrate: copy the real `TUNNEL_TOKEN` from the manual container into
   `cloudflared/.env`, `docker compose up -d` on `lab53`, retire the manual container, then

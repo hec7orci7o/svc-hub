@@ -1,0 +1,42 @@
+# TREK — self-hosted collaborative travel planner (mauriceboe/trek image) on lab54.
+# Deploy-only, same pattern as every other service in this hub — no build of our own.
+# Copy .env.example to .env and fill it in before:
+#   mkdir -p data uploads   (create by hand to get the right owner/permissions)
+#   docker compose up -d
+
+services:
+  trek:
+    # Pinned literal tag (not an env var) so Renovate can see and bump it directly.
+    image: mauriceboe/trek:3.2.1
+    restart: unless-stopped
+    read_only: true
+    # cap_drop: ALL is the hub baseline; CHOWN/SETUID/SETGID are re-added because the
+    # entrypoint needs them to fix ownership of the bind-mounted data/uploads dirs at
+    # startup — this is upstream's own documented production config, not a hub deviation.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+    tmpfs:
+      - /tmp:noexec,nosuid,size=64m
+    ports:
+      - "3000:3000"
+    env_file: ./.env
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
