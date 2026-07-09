@@ -49,12 +49,24 @@ Use the `service-scaffolder` subagent, or by hand:
 3. Configure a GitHub webhook pointing directly at that Stack's `/deploy` (copied from the
    Komodo UI, Stack Config > Webhooks) — there's no CI to trigger it from.
 
-## Compose resource-limit trap
+## No resource limits, on purpose
 
-Always use `mem_limit`/`cpus` (Compose shorthand, always applied with `docker compose up`).
-**Don't** use `deploy.resources.limits`: the Compose CLI ignores that field unless `--compatibility`
-is passed — it's only native in Swarm mode. On a resource-constrained Raspberry Pi, a limit that
-"looks" configured but doesn't apply is worse than no limit at all.
+Services don't set `mem_limit`/`cpus` — a hard `mem_limit` below what a service actually needs
+OOM-kills it outright (that's exactly what happened with n8n at `1g`, below its own documented
+2GB floor); without a limit, the Pi's own memory pressure/OOM killer handles it instead. If a
+future need for real limits comes up, use Compose's `mem_limit`/`cpus` shorthand, not
+`deploy.resources.limits` — the Compose CLI ignores that field unless `--compatibility` is
+passed, since it's only native in Swarm mode, so it would look configured without applying.
+
+## Compose security baseline
+
+Every service gets `security_opt: [no-new-privileges:true]` — it only blocks privilege
+escalation via setuid binaries, never breaks anything legitimate. Add `cap_drop: [ALL]` too,
+unless the service's own entrypoint needs root-level capabilities at startup (common in
+official DB images that `chown`/`setuid` down to an unprivileged user) or it genuinely needs
+host-level access by design (Periphery's `docker.sock`/`/proc` mounts). Skipping `cap_drop` for
+either reason must come with a one-line comment saying why — a silent skip reads as an
+oversight, not a decision, to the next reader.
 
 ## Renovate → Komodo flow
 

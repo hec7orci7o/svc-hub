@@ -17,6 +17,12 @@ services:
       komodo.skip: # prevents Komodo from stopping this container via StopAllContainers
     command: --quiet --wiredTigerCacheSizeGB 0.25
     restart: unless-stopped
+    # No cap_drop here: the official entrypoint needs root-level capabilities
+    # (chown/setuid/setgid) at startup to init the data dir and then drop to the
+    # mongodb user — dropping ALL breaks that. no-new-privileges is still safe on
+    # top of it, since it doesn't block a root-initiated setuid.
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - mongo-data:/data/db
       - mongo-config:/data/configdb
@@ -36,6 +42,10 @@ services:
     ports:
       - "9120:9120"
     env_file: ./.env
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     environment:
       KOMODO_DATABASE_ADDRESS: mongo:27017
     volumes:
@@ -54,6 +64,12 @@ services:
     depends_on:
       - core
     env_file: ./.env
+    # No cap_drop here: it needs full access to the host's docker.sock and /proc to
+    # manage containers and report host stats — that's the whole point of Periphery,
+    # and it's effectively root-on-host already via the socket regardless of Linux
+    # capabilities. no-new-privileges is still worth keeping.
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - keys:/config/keys
       - /var/run/docker.sock:/var/run/docker.sock

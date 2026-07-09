@@ -14,5 +14,7 @@ services:
     restart: unless-stopped
     command: tunnel run
     env_file: ./.env
-    mem_limit: 256m
-    cpus: 0.5
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL

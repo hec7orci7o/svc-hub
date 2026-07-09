@@ -11,8 +11,11 @@ there's no build step, no Dockerfile, no registry the hub owns:
 - Create `<name>/{docker-compose.yml,.env.example}` at the repo root, referencing the official
   upstream image directly. Use `n8n/docker-compose.yml` and `n8n/.env.example` as the reference
   template: version pinned as a **literal tag directly in `docker-compose.yml`** (not behind an
-  env var — that's what lets Renovate see and bump it, see `CLAUDE.md`), `mem_limit`/`cpus`,
-  healthcheck, secrets as placeholders to fill in `.env` — never in the `.example`.
+  env var — that's what lets Renovate see and bump it, see `CLAUDE.md`), healthcheck,
+  `security_opt: [no-new-privileges:true]` + `cap_drop: [ALL]` (see "Compose security baseline"
+  in `CLAUDE.md` for when to skip `cap_drop`), secrets as placeholders to fill in `.env` —
+  never in the `.example`. No `mem_limit`/`cpus` — deliberately unset in this hub, see "No
+  resource limits, on purpose" in `CLAUDE.md`.
 - Create `komodo/stacks/<name>.toml` following the format of `komodo/stacks/n8n.toml` (same
   `git_provider`/`repo`/`branch`; `file_paths` pointing at the new `docker-compose.yml`; ask the
   user which `server` in `komodo/servers.toml` they want it deployed to).
