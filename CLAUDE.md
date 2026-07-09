@@ -113,6 +113,10 @@ See `komodo/core/docker-compose.yml` + `komodo/core/.env.example` (copy to
 `.env`, never committed — see `.gitignore`). To connect the rest of the fleet,
 see `komodo/CONNECT-SERVERS.md` (Periphery via systemd, Komodo's recommended method).
 
+Mongo is pinned to `4.4.18`, not a newer/unpinned tag: MongoDB 5.0+ requires ARMv8.2-A, which
+Raspberry Pi 4's Cortex-A72 doesn't have — `:latest` crashes on boot with `SIGILL`. See the
+`ponytail:` comment on that image line for the upgrade path if this ever needs to change.
+
 ## Deploying n8n (lab56)
 
 See `n8n/docker-compose.yml` + `n8n/.env.example`. Official image, SQLite (enough for a
@@ -124,13 +128,19 @@ it breaks decryption of already-saved credentials.
 
 ## Deploying cloudflared (lab53)
 
-See `cloudflared/docker-compose.yml` + `cloudflared/.env.example`. This is the hub's only
-public ingress: it opens an outbound-only connection to Cloudflare, so no router port
-forwarding is needed for any service. Hostname-to-internal-service routing (which public
-hostname maps to which Pi's `<name>.local:port`) is configured in the Cloudflare Zero Trust dashboard,
-not in this repo. Individual services still bind their port to the host (`ports:` in their own
-compose file) so cloudflared can reach them over the LAN — that binding is LAN-only
+See `cloudflared/docker-compose.yml` + `cloudflared/.env.example`. This is meant to be the
+hub's only public ingress: it opens an outbound-only connection to Cloudflare, so no router
+port forwarding is needed for any service. Hostname-to-internal-service routing (which public
+hostname maps to which Pi's `<name>.local:port`) is configured in the Cloudflare Zero Trust
+dashboard, not in this repo. Individual services still bind their port to the host (`ports:` in
+their own compose file) so cloudflared can reach them over the LAN — that binding is LAN-only
 reachability, not public exposure, since nothing forwards it at the router.
+
+**Not deployed yet, on purpose:** `hermes`/`lab53` already runs a cloudflared tunnel started
+manually outside this repo (unpinned `:latest`, predates this hub). `komodo/stacks/cloudflared.toml`
+is declared so it shows up in Komodo, but its `/deploy` webhook is deliberately not registered
+in GitHub — don't deploy it without migrating the real `TUNNEL_TOKEN` from the manual container
+into `cloudflared/.env` first and retiring the manual one, or you'll end up running two tunnels.
 
 ## Manual steps outside git (not automatable from this repo)
 
@@ -149,7 +159,7 @@ reachability, not public exposure, since nothing forwards it at the router.
 - On `lab56`: copy `n8n/.env.example` to `.env`, generate `N8N_ENCRYPTION_KEY`,
   `mkdir -p local-files`, and `docker compose up -d`.
 - Configure the GitHub webhook toward the `n8n` Stack's `/deploy` in Komodo.
-- On `lab53`: create the tunnel in the Cloudflare Zero Trust dashboard, copy its token into
-  `cloudflared/.env`, define Public Hostname rules for each service to expose, and
-  `docker compose up -d`.
-- Configure the GitHub webhook toward the `cloudflared` Stack's `/deploy` in Komodo.
+- `cloudflared` is intentionally on hold — see "Not deployed yet, on purpose" above. When
+  ready to migrate: copy the real `TUNNEL_TOKEN` from the manual container into
+  `cloudflared/.env`, `docker compose up -d` on `lab53`, retire the manual container, then
+  configure the GitHub webhook toward the `cloudflared` Stack's `/deploy` in Komodo.

@@ -7,7 +7,12 @@
 
 services:
   mongo:
-    image: mongo
+    # ponytail: MongoDB 5.0+ requires ARMv8.2-A; Raspberry Pi 4 (Cortex-A72) is only
+    # ARMv8.0-A, so :latest SIGILL-crashes on boot. 4.4.18 is the last official arm64
+    # build that runs on this hardware (series is EOL since 2024-02, no security
+    # patches). Upgrade path: move Mongo to a Pi 5 (Cortex-A76, ARMv8.2-A) or a non-Pi
+    # host if a newer, patched MongoDB is ever needed.
+    image: mongo:4.4.18
     labels:
       komodo.skip: # prevents Komodo from stopping this container via StopAllContainers
     command: --quiet --wiredTigerCacheSizeGB 0.25
