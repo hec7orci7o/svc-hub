@@ -192,6 +192,9 @@ any hardware/version-pin quirks live as comments in that service's own
   `REDIS_PASSWORD`, `SECRET_KEY`, and `ENCRYPTION_KEYS`/`DEFAULT_ENCRYPTION_KEY_ID`, then
   `docker compose up -d`.
 - Configure the GitHub webhook toward the `sysreptor` Stack's `/deploy` in Komodo.
+- Import [HTB's report templates](https://github.com/Syslifters/HackTheBox-Reporting) — run
+  from `sysreptor/` on lab58:
+  `curl -s "https://docs.sysreptor.com/assets/htb-designs.tar.gz" | docker compose exec --no-TTY app python3 manage.py importdemodata --type=design`
 - Also on `lab58`: copy `bloodhound-ce/.env.example` to `.env`, set real `POSTGRES_PASSWORD`
   and `NEO4J_SECRET`, then `docker compose up -d`. Grab the randomized admin password from
   `docker compose logs bloodhound`.
