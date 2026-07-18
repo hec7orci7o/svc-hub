@@ -1,4 +1,4 @@
-# scanopy — network topology/documentation tool (ghcr.io/scanopy/scanopy images) on lab57.
+# scanopy — network topology/documentation tool (ghcr.io/scanopy/scanopy images) on lab53.
 # Deploy-only, same pattern as every other service in this hub — no build of our own.
 # AGPL-3.0 for self-hosted use; see https://github.com/scanopy/scanopy for the commercial
 # license alternative if AGPL's source-disclosure requirement doesn't fit your use case.

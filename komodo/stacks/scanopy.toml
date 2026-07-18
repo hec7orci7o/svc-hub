@@ -10,7 +10,7 @@ description = "scanopy — network topology documentation (ghcr.io/scanopy image
 tags = ["scanopy"]
 
 [stack.config]
-server = "lab57"
+server = "lab53"
 git_provider = "github.com"
 repo = "hec7orci7o/svc-hub"
 branch = "main"
@@ -20,5 +20,5 @@ file_paths = ["docker-compose.yml"]
 environment = """
 SCANOPY_LOG_LEVEL=info
 POSTGRES_PASSWORD=[[SCANOPY_POSTGRES_PASSWORD]]
-SCANOPY_PUBLIC_URL=http://lab57.local:60072
+SCANOPY_PUBLIC_URL=http://lab53:60072
 """

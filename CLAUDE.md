@@ -7,11 +7,11 @@ Raspberry Pi boards. See `README.md` for a getting-started cheatsheet.
 
 | Name | Role |
 |---|---|
-| `lab53` | Komodo Core + Periphery + cloudflared |
+| `lab53` | Komodo Core + Periphery + cloudflared + scanopy |
 | `lab54` | Periphery — runs TREK |
 | `lab55` | Periphery — runs Odoo |
 | `lab56` | Periphery — runs n8n, cups |
-| `lab57` | Periphery — runs scanopy |
+| `lab57` | Periphery — idle, nothing scheduled |
 | `lab58` | Periphery — runs sysreptor, bloodhound-ce |
 
 Declared as code in `komodo/servers.toml`, addressed by `<name>.local` (mDNS/Avahi, on by
@@ -156,7 +156,7 @@ any hardware/version-pin quirks live as comments in that service's own
 | cups | `lab56` | `cups/`; secrets via Komodo Variables (see above); `network_mode: host` + `privileged: true` |
 | Odoo | `lab55` | `odoo/`; own bridge network isolates Postgres from the LAN |
 | TREK | `lab54` | `trek/` |
-| scanopy | `lab57` | `scanopy/`; `network_mode: host` + `privileged: true` on `daemon` |
+| scanopy | `lab53` | `scanopy/`; shares the board with Komodo Core/cloudflared; `network_mode: host` + `privileged: true` on `daemon`; LAN-only by decision (maps real network topology) |
 | SysReptor | `lab58` | `sysreptor/`; shares the board with BloodHound CE |
 | BloodHound CE | `lab58` | `bloodhound-ce/`; shares the board with SysReptor |
 | cloudflared | `lab53` | `cloudflared/`; **not deployed yet on purpose** — see the note in `cloudflared/docker-compose.yml` |
@@ -185,7 +185,7 @@ any hardware/version-pin quirks live as comments in that service's own
 - On `lab54`: `mkdir -p trek/data trek/uploads`. In Komodo, create `TREK_ENCRYPTION_KEY`
   ("secret") — interpolated via `komodo/stacks/trek.toml`.
 - Configure the GitHub webhook toward the `trek` Stack's `/deploy` in Komodo.
-- On `lab57`: `mkdir -p scanopy/data`. In Komodo, create `SCANOPY_POSTGRES_PASSWORD`
+- On `lab53`: `mkdir -p scanopy/data`. In Komodo, create `SCANOPY_POSTGRES_PASSWORD`
   ("secret") — interpolated via `komodo/stacks/scanopy.toml`.
 - Configure the GitHub webhook toward the `scanopy` Stack's `/deploy` in Komodo.
 - In Komodo (Settings > Variables), create `SYSREPTOR_POSTGRES_PASSWORD`,

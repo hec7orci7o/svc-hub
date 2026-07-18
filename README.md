@@ -15,7 +15,7 @@ already-published image and Komodo deploys it straight from `docker-compose.yml`
 | `cups/` | CUPS/AirPrint bridge | `lab56` |
 | `odoo/` | Odoo ERP + Postgres | `lab55` |
 | `trek/` | TREK — collaborative travel planner | `lab54` |
-| `scanopy/` | scanopy — network topology documentation | `lab57` |
+| `scanopy/` | scanopy — network topology documentation | `lab53` |
 | `sysreptor/` | SysReptor — pentest reporting platform | `lab58` |
 | `bloodhound-ce/` | BloodHound CE — AD attack path analysis | `lab58` |
 | `komodo/servers.toml`, `komodo/stacks/*.toml` | Fleet + Stack definitions, synced via Komodo's ResourceSync | — |
@@ -34,7 +34,7 @@ already-published image and Komodo deploys it straight from `docker-compose.yml`
    webhook in GitHub.
 6. **Deploy the rest of the services** the same way (`.env.example` → `.env` → fill in →
    `docker compose up -d` → register the Stack's `/deploy` webhook): `n8n`/`cups` on `lab56`,
-   `odoo` on `lab55`, `trek` on `lab54`, `scanopy` on `lab57`, `sysreptor`/`bloodhound-ce` on
+   `odoo` on `lab55`, `trek` on `lab54`, `scanopy` on `lab53`, `sysreptor`/`bloodhound-ce` on
    `lab58`.
 
 Full architecture, conventions, and the Renovate/webhook mechanics are in `CLAUDE.md`.
