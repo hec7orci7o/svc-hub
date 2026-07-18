@@ -149,9 +149,18 @@ Uses `network_mode: host` (AirPrint/Bonjour discovery needs real mDNS broadcasts
 cross a bridge network) and `privileged: true` (USB printer passthrough + Avahi/dbus host
 integration) — the hub's usual `no-new-privileges`/`cap_drop: ALL` baseline is skipped here on
 purpose, not by oversight (see the comment on the `cups` service). Its web admin panel must
-stay LAN-only: never give it a `cloudflared` Public Hostname rule, since `CUPS_ADMIN_PASSWORD`
-sits in plaintext in `.env`. This image tags by build date (`focal-YYYYMMDD`), not semver, so
-Renovate PRs for it need manual review rather than trusting patch/minor automerge.
+stay LAN-only: never give it a `cloudflared` Public Hostname rule. This image tags by build
+date (`focal-YYYYMMDD`), not semver, so Renovate PRs for it need manual review rather than
+trusting patch/minor automerge.
+
+Unlike every other service in this hub, `CUPS_ADMIN_USER`/`CUPS_ADMIN_PASSWORD` are **not**
+filled into a hand-copied `.env` on the host — `komodo/stacks/cups.toml` declares
+`run_directory`/`file_paths` scoped to `cups/` and an `environment` block that interpolates
+them from Komodo Variables (`[[CUPS_ADMIN_USER]]`/`[[CUPS_ADMIN_PASSWORD]]`, `PASSWORD` marked
+"secret" in Komodo's Settings > Variables). Komodo writes the resolved `cups/.env` itself at
+deploy time, which `env_file: ./.env` in the compose file then reads — see the comments in
+`komodo/stacks/cups.toml` for why the run directory had to change to make that path line up.
+`cups/.env.example` is kept only as a fallback reference for deploying by hand outside Komodo.
 
 ## Deploying Odoo (lab55)
 
@@ -244,8 +253,9 @@ into `cloudflared/.env` first and retiring the manual one, or you'll end up runn
 - On `lab56`: copy `n8n/.env.example` to `.env`, generate `N8N_ENCRYPTION_KEY`,
   `mkdir -p local-files`, and `docker compose up -d`.
 - Configure the GitHub webhook toward the `n8n` Stack's `/deploy` in Komodo.
-- On `lab56`: copy `cups/.env.example` to `.env`, set a real `CUPS_ADMIN_PASSWORD`, and
-  `docker compose up -d`.
+- In Komodo (Settings > Variables), create `CUPS_ADMIN_USER` and `CUPS_ADMIN_PASSWORD`
+  (mark `CUPS_ADMIN_PASSWORD` "secret") — interpolated into the `cups` Stack's `environment`
+  via `komodo/stacks/cups.toml`. No manual `.env` needed on lab56 for this service.
 - Configure the GitHub webhook toward the `cups` Stack's `/deploy` in Komodo.
 - On `lab55`: copy `odoo/.env.example` to `.env`, set a real `POSTGRES_PASSWORD`,
   `mkdir -p addons config`, and `docker compose up -d`.

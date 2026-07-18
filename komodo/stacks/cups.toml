@@ -14,4 +14,38 @@ server = "lab56"
 git_provider = "github.com"
 repo = "hec7orci7o/svc-hub"
 branch = "main"
-file_paths = ["cups/docker-compose.yml"]
+# run_directory + relative file_paths (rather than the repo-root convention every other
+# stack uses) so this Stack's written .env, the compose file, and docker compose's own
+# CWD all resolve to the same cups/ folder — required for env_file: ./.env below to pick
+# up what `environment` writes. See CUPS_ADMIN_USER/CUPS_ADMIN_PASSWORD in `environment`.
+run_directory = "cups"
+file_paths = ["docker-compose.yml"]
+
+# CUPS_ADMIN_USER/CUPS_ADMIN_PASSWORD are never hardcoded here: [[NAME]] interpolates
+# from Komodo Variables (Settings > Variables, mark CUPS_ADMIN_PASSWORD "secret" at
+# minimum) at deploy time. Komodo writes the resolved content to cups/.env before
+# `docker compose up -d`, which env_file: ./.env in cups/docker-compose.yml then reads —
+# no manual .env needed on lab56 for this service anymore.
+environment = """
+CUPS_ADMIN_USER=[[CUPS_ADMIN_USER]]
+CUPS_ADMIN_PASSWORD=[[CUPS_ADMIN_PASSWORD]]
+
+CUPS_WEBINTERFACE=yes
+CUPS_SHARE_PRINTERS=yes
+CUPS_REMOTE_ADMIN=yes
+
+CUPS_ACCESS_LOGLEVEL=config
+CUPS_LOGLEVEL=warn
+CUPS_ENV_DEBUG=no
+
+CUPS_IP=
+CUPS_HOSTNAME=
+
+CUPS_SSL_CERT=
+CUPS_SSL_KEY=
+
+AVAHI_INTERFACES=
+AVAHI_IPV6=no
+AVAHI_REFLECTOR=no
+AVAHI_REFLECT_IPV=no
+"""
