@@ -123,146 +123,59 @@ rather than for architecture/stability reasons.
 auto-merge" to be enabled in the GitHub repo settings (Settings > General > Pull Requests).
 Without it, Renovate's patch/minor PRs will open but never actually merge themselves.
 
-## Deploying Komodo Core (lab53)
+## Secrets via Komodo Variables
 
-See `komodo/core/docker-compose.yml` + `komodo/core/.env.example` (copy to
-`.env`, never committed — see `.gitignore`). To connect the rest of the fleet,
-see `komodo/CONNECT-SERVERS.md` (Periphery via systemd, Komodo's recommended method).
+Default pattern for any secret a service needs (not just `.env` filled by hand on the host):
+declare an `environment` block in that service's `komodo/stacks/<name>.toml`, containing the
+full `.env`-style content that service needs, with secrets referenced as `[[VARIABLE_NAME]]`
+instead of literal values. Komodo resolves those against Settings > Variables (mark the
+sensitive ones "secret" — masks them in logs/UI, doesn't block non-admin access on a
+single-admin instance) and writes the result to a `.env` file on the host itself right before
+`docker compose up -d`, which the service's own `env_file: ./.env` then reads. No hand-copied
+`.env` needed on the host for anything covered this way. `komodo/stacks/n8n.toml` and
+`komodo/stacks/cups.toml` are the reference examples.
 
-Mongo is pinned to `4.4.18`, not a newer/unpinned tag: MongoDB 5.0+ requires ARMv8.2-A, which
-Raspberry Pi 4's Cortex-A72 doesn't have — `:latest` crashes on boot with `SIGILL`. See the
-`ponytail:` comment on that image line for the upgrade path if this ever needs to change.
+Two things that must line up for this to work, both non-obvious from Komodo's docs:
+- **`run_directory` + `file_paths` must put the run directory, the compose file, and the
+  written `.env` all in the same folder.** `file_paths` are relative to `run_directory`
+  (default: repo root); the written `.env`'s path (`env_file_path`, default `.env`) is
+  *also* relative to `run_directory` — but a plain `env_file: ./.env` in the compose file
+  resolves relative to the compose file's own directory, not `run_directory`. Set
+  `run_directory = "<service>"` and `file_paths = ["docker-compose.yml"]` (not
+  `["<service>/docker-compose.yml"]` from the repo root, the convention every other Stack
+  without this pattern still uses) so all three coincide.
+- **Config-driven changes to a Stack (`run_directory`, `file_paths`, `environment`) need the
+  `ResourceSync` to run** (Execute Sync in the Komodo UI, or its own `/sync` webhook — see
+  "Renovate → Komodo flow" above for why that's a different webhook than the Stack's own
+  `/deploy`). Hitting `/deploy` alone redeploys with whatever Stack config Komodo already had
+  saved, silently ignoring newer `komodo/stacks/<name>.toml` content until a sync catches up.
 
-## Deploying n8n (lab56)
+A missing or unresolved `[[VARIABLE_NAME]]` (Variable never created in Komodo) doesn't fail
+loudly at the Komodo level — it gets passed through as the literal placeholder text, and
+whether that's caught depends entirely on the app. n8n's `N8N_INSTANCE_OWNER_PASSWORD_HASH`
+is a case that crash-loops the container on every boot with a clear error
+(`... is not a valid bcrypt hash`) — confirmed in production on this exact deployment. Others
+may fail more silently (e.g. an app just treating the placeholder as a literal password).
+Always verify Variables actually exist in Komodo before the first deploy of a Stack using
+this pattern, don't assume the sync/deploy will surface a missing one for you.
 
-See `n8n/docker-compose.yml` + `n8n/.env.example`. Official image, SQLite (enough for a
-single instance). **Publicly exposed today** via the `cloudflared/` tunnel on lab53 at a real
-domain (`n8n.hectortoral.com`) — despite this compose file's port binding being LAN-only by
-itself, don't assume n8n is LAN-only in practice. Pinned to `2.29.8`; this hub replaces a
-pre-existing manual deployment already running `2.3.5` (an unrelated `1.81.0` pin here
-before the migration was never what was actually live), so the real jump is a same-major
-minor bump, not the major it might look like from this repo's own history — see
-[n8n v2.0 breaking changes](https://docs.n8n.io/changelog/v20-breaking-changes) regardless,
-since `2.3.5` predates several v2 default changes. `N8N_SECURE_COOKIE=false`,
-`N8N_BLOCK_ENV_ACCESS_IN_NODE=false`, and `NODE_FUNCTION_ALLOW_EXTERNAL=cheerio` are all
-carried over from the pre-existing production `.env` on purpose — the first because
-cloudflared terminates TLS and forwards http internally, the other two because existing
-workflows already depend on that access n8n v2 would otherwise block by default.
+## Service reference
 
-Like cups (see below), nothing sensitive is hand-copied into a `.env` on lab56:
-`komodo/stacks/n8n.toml` declares `run_directory`/`file_paths` scoped to `n8n/` and an
-`environment` block that interpolates secrets from Komodo Variables at deploy time.
-`N8N_ENCRYPTION_KEY` is critical: for this migration it must be the exact key n8n already
-generated for itself (extract with
-`docker run --rm -v n8n_n8n_data:/data alpine cat /data/config` on lab56), never a freshly
-generated one — that key encrypts already-saved credentials, and a fresh key can no longer
-decrypt them (only generate a new one with `openssl rand -hex 32` for a genuinely new
-instance with no existing data). The instance owner is also pre-provisioned via env vars
-(`N8N_INSTANCE_OWNER_MANAGED_BY_ENV=true`, n8n v2.17.0+) instead of n8n's in-app signup UI:
-`N8N_INSTANCE_OWNER_EMAIL`/`PASSWORD_HASH` interpolate from Komodo Variables (`PASSWORD_HASH`
-marked secret) — the value must be a **bcrypt hash**, not a plaintext password (generate with
-e.g. `htpasswd -bnBC 10 "" 'your-password' | cut -d: -f2`), and `EMAIL` must match whatever
-owner account already exists on the instance (n8n docs: this updates the existing owner, it
-doesn't create or merge accounts). `n8n/.env.example` is kept only as a fallback reference for
-deploying by hand outside Komodo.
+Every service is deploy-only (see above) — the authoritative config, secrets handling, and
+any hardware/version-pin quirks live as comments in that service's own
+`docker-compose.yml`/`.env.example`/`komodo/stacks/<name>.toml`, not duplicated here.
 
-The pre-existing manual deployment's healthcheck was permanently `unhealthy` because it used
-`curl`, which isn't in the n8n image — this repo's healthcheck already uses `wget` instead, so
-that resolves itself on migration without any action needed.
-
-## Deploying CUPS/AirPrint bridge (lab56)
-
-See `cups/docker-compose.yml` + `cups/.env.example`. Runs alongside n8n on the same board.
-Uses `network_mode: host` (AirPrint/Bonjour discovery needs real mDNS broadcasts, which don't
-cross a bridge network) and `privileged: true` (USB printer passthrough + Avahi/dbus host
-integration) — the hub's usual `no-new-privileges`/`cap_drop: ALL` baseline is skipped here on
-purpose, not by oversight (see the comment on the `cups` service). Its web admin panel must
-stay LAN-only: never give it a `cloudflared` Public Hostname rule. This image tags by build
-date (`focal-YYYYMMDD`), not semver, so Renovate PRs for it need manual review rather than
-trusting patch/minor automerge.
-
-Unlike every other service in this hub, `CUPS_ADMIN_USER`/`CUPS_ADMIN_PASSWORD` are **not**
-filled into a hand-copied `.env` on the host — `komodo/stacks/cups.toml` declares
-`run_directory`/`file_paths` scoped to `cups/` and an `environment` block that interpolates
-them from Komodo Variables (`[[CUPS_ADMIN_USER]]`/`[[CUPS_ADMIN_PASSWORD]]`, `PASSWORD` marked
-"secret" in Komodo's Settings > Variables). Komodo writes the resolved `cups/.env` itself at
-deploy time, which `env_file: ./.env` in the compose file then reads — see the comments in
-`komodo/stacks/cups.toml` for why the run directory had to change to make that path line up.
-`cups/.env.example` is kept only as a fallback reference for deploying by hand outside Komodo.
-
-## Deploying Odoo (lab55)
-
-See `odoo/docker-compose.yml` + `odoo/.env.example`. Official `odoo` + `postgres` images, own
-bridge network (`odoo_network`) so Postgres isn't reachable from the LAN, only Odoo's HTTP
-(`8069`) and websocket (`8072`) ports are published. Postgres's memory tuning
-(`shared_buffers=512MB`, `effective_cache_size=2GB`) is sized for lab55's 8GB — see the comment
-on that `command:` line before moving this to a smaller board. `./addons` and `./config` are
-bind mounts for custom modules/config, created by hand on the host (same pattern as n8n's
-`local-files`), not committed.
-
-## Deploying TREK (lab54)
-
-See `trek/docker-compose.yml` + `trek/.env.example`. Official image, SQLite (no external DB),
-reachable only over the LAN by mDNS hostname (`http://lab54.local:3000`) — same public-exposure
-model as n8n, via the `cloudflared/` tunnel on lab53 if ever enabled. `ENCRYPTION_KEY` is
-critical (encrypts stored secrets: API keys, MFA, SMTP, OIDC) — generate once with
-`openssl rand -hex 32`; unlike n8n, upstream documents a rotation script if you ever need to
-change it, but treat it as permanent by default. `ADMIN_EMAIL`/`ADMIN_PASSWORD` only apply on
-first boot.
-
-## Deploying scanopy (lab57)
-
-See `scanopy/docker-compose.yml` + `scanopy/.env.example`. Three containers: `daemon` (host
-networking + `privileged: true`, needed for real LAN topology discovery — see the comment on
-that service), `postgres`, and `server` (published on `:60072`). AGPL-3.0 for self-hosted use —
-if this ever needs to run as a commercial/closed offering instead, see the licensing note in
-the compose file. Images are pinned to `v0.17.4`; the project is pre-1.0, so
-`renovate.json` carves out an explicit exception keeping its minor bumps off automerge
-(0.x minor bumps aren't guaranteed non-breaking under semver) — patch bumps still automerge
-like everything else.
-
-## Deploying SysReptor (lab58)
-
-See `sysreptor/docker-compose.yml` + `sysreptor/.env.example`. Pentest reporting platform:
-`postgres:14` + `redis:8.0-alpine` + the official `syslifters/sysreptor` app image. Upstream's
-own `install.sh` generates a compose with `build: ../../` alongside `image:`, which would
-build the image locally — deliberately omitted here so this stays deploy-only, since
-`image:` alone already pulls the exact tag they publish. Two secrets are critical:
-`SECRET_KEY` (session signing, safe to rotate — just logs everyone out) and
-`ENCRYPTION_KEYS` (encrypts findings/uploads at rest — losing every listed key makes
-existing data unrecoverable, rotate by adding a new key rather than replacing the only one).
-No license key needed for community use — `LICENSE` is Professional-tier only. Code license
-is "SysReptor Community License 1.1" (source-available, not an OSI-approved license).
-
-## Deploying BloodHound CE (lab58)
-
-See `bloodhound-ce/docker-compose.yml` + `bloodhound-ce/.env.example`. Shares lab58 with
-`sysreptor`. No `mem_limit`/JVM heap cap set on `graph-db` (Neo4j), same "no resource limits"
-reasoning as the rest of the hub — see that section above. Three containers:
-`app-db` (`postgres:18`), `graph-db` (`neo4j:4.4.42`, pinned to the 4.4 line on purpose —
-BloodHound CE's graph schema targets it, don't bump ahead of upstream; `renovate.json` blocks
-automerge on its minors accordingly), and `bloodhound` (the only one published to the LAN, on
-`:8080`). Postgres and Neo4j are intentionally **not** published to the host, unlike upstream's
-example compose — Neo4j's browser is a second attack surface with its own credentials on top
-of the BloodHound UI, and this is a tool whose whole purpose is mapping AD attack paths, so
-treat its own exposure with the same care. The initial admin password is randomized on first
-boot and printed to `docker compose logs bloodhound`, not stored in `.env`.
-
-## Deploying cloudflared (lab53)
-
-See `cloudflared/docker-compose.yml` + `cloudflared/.env.example`. This is meant to be the
-hub's only public ingress: it opens an outbound-only connection to Cloudflare, so no router
-port forwarding is needed for any service. Hostname-to-internal-service routing (which public
-hostname maps to which Pi's `<name>.local:port`) is configured in the Cloudflare Zero Trust
-dashboard, not in this repo. Individual services still bind their port to the host (`ports:` in
-their own compose file) so cloudflared can reach them over the LAN — that binding is LAN-only
-reachability, not public exposure, since nothing forwards it at the router.
-
-**Not deployed yet, on purpose:** `hermes`/`lab53` already runs a cloudflared tunnel started
-manually outside this repo (unpinned `:latest`, predates this hub). `komodo/stacks/cloudflared.toml`
-is declared so it shows up in Komodo, but its `/deploy` webhook is deliberately not registered
-in GitHub — don't deploy it without migrating the real `TUNNEL_TOKEN` from the manual container
-into `cloudflared/.env` first and retiring the manual one, or you'll end up running two tunnels.
+| Service | Board | Deploy notes |
+|---|---|---|
+| Komodo Core | `lab53` | `komodo/core/`; see `komodo/CONNECT-SERVERS.md` to connect the rest of the fleet |
+| n8n | `lab56` | `n8n/`; secrets via Komodo Variables (see above) |
+| cups | `lab56` | `cups/`; secrets via Komodo Variables (see above); `network_mode: host` + `privileged: true` |
+| Odoo | `lab55` | `odoo/`; own bridge network isolates Postgres from the LAN |
+| TREK | `lab54` | `trek/` |
+| scanopy | `lab57` | `scanopy/`; `network_mode: host` + `privileged: true` on `daemon` |
+| SysReptor | `lab58` | `sysreptor/`; shares the board with BloodHound CE |
+| BloodHound CE | `lab58` | `bloodhound-ce/`; shares the board with SysReptor |
+| cloudflared | `lab53` | `cloudflared/`; **not deployed yet on purpose** — see the note in `cloudflared/docker-compose.yml` |
 
 ## Manual steps outside git (not automatable from this repo)
 
@@ -278,24 +191,10 @@ into `cloudflared/.env` first and retiring the manual one, or you'll end up runn
 - Connect the rest of the fleet following `komodo/CONNECT-SERVERS.md`.
 - Manual bootstrap of the first `ResourceSync` in the Komodo UI (it can't self-create from a
   file it isn't reading yet) + register the GitHub webhook toward its listener.
-- On `lab56`: `mkdir -p local-files` (no `.env` copy needed, see below).
-- **n8n/cups migration-specific**: both already run manually on lab56 with real data. Their
-  named volumes (`n8n_n8n_data`, `cups_cups_config`) already match the names Komodo's
-  `run_directory`-scoped deploy will produce, so no volume renaming is needed — but stop each
-  pre-existing container (`docker stop n8n` / `docker stop cups_airprint`) right before that
-  Stack's first Komodo deploy, or the new container fails to bind the same port
-  (n8n `5678`) / host resources (cups `network_mode: host`). Don't delete the old containers
-  or volumes until the new deploy is verified working.
-- In Komodo (Settings > Variables), create `N8N_ENCRYPTION_KEY` (the exact existing key, see
-  above — not freshly generated) and `N8N_INSTANCE_OWNER_EMAIL`/`_FIRST_NAME`/`_LAST_NAME`/
-  `_PASSWORD_HASH` (`PASSWORD_HASH` is a **bcrypt hash**, not a plaintext password; mark
-  `N8N_ENCRYPTION_KEY` and `PASSWORD_HASH` "secret") — interpolated into the `n8n` Stack's
-  `environment` via `komodo/stacks/n8n.toml`.
-- Configure the GitHub webhook toward the `n8n` Stack's `/deploy` in Komodo.
-- In Komodo (Settings > Variables), create `CUPS_ADMIN_USER` and `CUPS_ADMIN_PASSWORD`
-  (mark `CUPS_ADMIN_PASSWORD` "secret") — interpolated into the `cups` Stack's `environment`
-  via `komodo/stacks/cups.toml`. No manual `.env` needed on lab56 for this service.
-- Configure the GitHub webhook toward the `cups` Stack's `/deploy` in Komodo.
+- On `lab56`: `mkdir -p n8n/local-files`. Create the Komodo Variables that
+  `komodo/stacks/n8n.toml` and `komodo/stacks/cups.toml` interpolate (see "Secrets via Komodo
+  Variables" above) before the first deploy of either Stack.
+- Configure the GitHub webhooks toward the `n8n` and `cups` Stacks' `/deploy` in Komodo.
 - On `lab55`: copy `odoo/.env.example` to `.env`, set a real `POSTGRES_PASSWORD`,
   `mkdir -p addons config`, and `docker compose up -d`.
 - Configure the GitHub webhook toward the `odoo` Stack's `/deploy` in Komodo.
@@ -313,7 +212,7 @@ into `cloudflared/.env` first and retiring the manual one, or you'll end up runn
   and `NEO4J_SECRET`, then `docker compose up -d`. Grab the randomized admin password from
   `docker compose logs bloodhound`.
 - Configure the GitHub webhook toward the `bloodhound-ce` Stack's `/deploy` in Komodo.
-- `cloudflared` is intentionally on hold — see "Not deployed yet, on purpose" above. When
-  ready to migrate: copy the real `TUNNEL_TOKEN` from the manual container into
+- `cloudflared` is intentionally on hold — see the note in `cloudflared/docker-compose.yml`.
+  When ready to migrate: copy the real `TUNNEL_TOKEN` from the manual container into
   `cloudflared/.env`, `docker compose up -d` on `lab53`, retire the manual container, then
   configure the GitHub webhook toward the `cloudflared` Stack's `/deploy` in Komodo.

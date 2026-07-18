@@ -23,11 +23,8 @@ file_paths = ["docker-compose.yml"]
 # Komodo Variable (Settings > Variables, marked "secret") at deploy time. Komodo writes
 # the resolved content to n8n/.env before `docker compose up -d`, which env_file: ./.env
 # in n8n/docker-compose.yml then reads — no manual .env needed on lab56 for this service.
-# MIGRATION: this hub replaces a pre-existing manual n8n deployment on lab56 that already
-# has real data — do NOT generate a fresh key. Use the exact value n8n already generated
-# for itself, extracted from the live volume with:
-#   docker run --rm -v n8n_n8n_data:/data alpine cat /data/config
-# A wrong/new key makes every already-saved credential undecryptable.
+# Generate once with `openssl rand -hex 32` and never change it afterward — changing it
+# breaks decryption of already-saved credentials.
 environment = """
 GENERIC_TIMEZONE=Europe/Madrid
 TZ=Europe/Madrid
@@ -46,7 +43,6 @@ N8N_SECURE_COOKIE=false
 N8N_ENCRYPTION_KEY=[[N8N_ENCRYPTION_KEY]]
 
 N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
-N8N_RUNNERS_ENABLED=true
 N8N_RESTRICT_FILE_ACCESS_TO=/files
 
 # Carried over from the pre-existing deployment's .env so existing workflows don't break
@@ -57,10 +53,10 @@ NODE_FUNCTION_ALLOW_EXTERNAL=cheerio
 
 NODE_ENV=production
 
-# MIGRATION: N8N_INSTANCE_OWNER_EMAIL must match the email of the owner account that
-# ALREADY exists in this instance (n8n docs: this updates the existing owner, it does not
-# create or merge accounts) — check Settings > Users in the current n8n UI before setting
-# the Komodo Variable, don't assume/invent an address.
+# PASSWORD_HASH must be a bcrypt hash, NOT a plaintext password — generate with e.g.
+#   docker run --rm httpd:alpine htpasswd -bnBC 10 "" 'your-password' | cut -d: -f2
+# n8n rejects startup entirely (crash-loop) if this isn't a valid bcrypt hash — an unset
+# or unresolved [[...]] placeholder Variable crashes it just as hard as a malformed one.
 N8N_INSTANCE_OWNER_MANAGED_BY_ENV=true
 N8N_INSTANCE_OWNER_EMAIL=[[N8N_INSTANCE_OWNER_EMAIL]]
 N8N_INSTANCE_OWNER_FIRST_NAME=[[N8N_INSTANCE_OWNER_FIRST_NAME]]
