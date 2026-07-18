@@ -1,9 +1,9 @@
 ; Odoo production config for lab57. The official odoo image only reads HOST/PORT/USER/
 ; PASSWORD from env vars (already set via Komodo, see komodo/stacks/odoo.toml) — everything
-; else below has no env-var equivalent and must live in this file. Copy to config/odoo.conf
-; (gitignored, NOT committed) and set a real admin_passwd before first boot; Komodo can't
-; write this one for you the way it writes .env (see CLAUDE.md's "Secrets via Komodo
-; Variables" for why that pattern only covers env vars, not arbitrary config files).
+; else below has no env-var equivalent and must live in this file. Create config/odoo.conf
+; (gitignored, NOT committed) with a real admin_passwd — easiest via the Komodo UI (Stack
+; odoo > Config Files > config/odoo.conf, registered in komodo/stacks/odoo.toml so it's
+; editable there directly) rather than finding the file's real path on lab57 by hand.
 
 [options]
 addons_path = /mnt/extra-addons

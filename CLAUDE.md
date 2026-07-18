@@ -144,8 +144,11 @@ Gotchas:
   in `komodo/stacks/n8n.toml`.
 - This pattern only covers env vars. A secret that only has a config-file form (Odoo's
   `admin_passwd`, for example — the official image has no env-var for it) can't go through
-  Komodo Variables; it stays a manually-edited, gitignored file on the host — see
-  `odoo/odoo.conf.example`.
+  Komodo Variables. `config_files` (a separate Stack field) tracks/diffs an existing file and
+  makes it editable in the Komodo UI, but — unlike `environment` — doesn't template or write
+  it from a Variable; the file still has to be created once, with the real secret, either
+  through that UI editor or by hand on the host. See `odoo/odoo.conf.example` and
+  `komodo/stacks/odoo.toml`.
 
 ## Service reference
 
@@ -183,9 +186,10 @@ any hardware/version-pin quirks live as comments in that service's own
   `komodo/stacks/n8n.toml` and `komodo/stacks/cups.toml` interpolate (see "Secrets via Komodo
   Variables" above) before the first deploy of either Stack.
 - Configure the GitHub webhooks toward the `n8n` and `cups` Stacks' `/deploy` in Komodo.
-- On `lab57`: `mkdir -p odoo/addons odoo/config`, copy `odoo/odoo.conf.example` to
-  `odoo/config/odoo.conf` and set a real `admin_passwd`. In Komodo, create
-  `ODOO_POSTGRES_PASSWORD` ("secret") — interpolated via `komodo/stacks/odoo.toml`.
+- On `lab57`: `mkdir -p odoo/addons`. Create `config/odoo.conf` with a real `admin_passwd`
+  (content from `odoo/odoo.conf.example`) via the Komodo UI's Stack > Config Files editor,
+  not by hand on the host. In Komodo, create `ODOO_POSTGRES_PASSWORD` ("secret") —
+  interpolated via `komodo/stacks/odoo.toml`.
 - Configure the GitHub webhook toward the `odoo` Stack's `/deploy` in Komodo.
 - On `lab54`: `mkdir -p trek/data trek/uploads`. In Komodo, create `TREK_ENCRYPTION_KEY`
   ("secret") — interpolated via `komodo/stacks/trek.toml`.
