@@ -57,9 +57,15 @@ NODE_ENV=production
 #   docker run --rm httpd:alpine htpasswd -bnBC 10 "" 'your-password' | cut -d: -f2
 # n8n rejects startup entirely (crash-loop) if this isn't a valid bcrypt hash — an unset
 # or unresolved [[...]] placeholder Variable crashes it just as hard as a malformed one.
+# Single-quoted: a bcrypt hash's own literal `$` characters (`$2b$12$...`) otherwise get
+# eaten by Docker Compose's env_file interpolation (it treats `$` the same everywhere,
+# not just in the compose YAML — confirmed in production: `$2b$12$Lzh3...` arrived at the
+# container as `$2b$12/Lzh3...`, missing the `$`, and n8n rejected it as malformed).
+# Quoting here means the Komodo Variable itself can hold the raw hash with no manual
+# escaping needed.
 N8N_INSTANCE_OWNER_MANAGED_BY_ENV=true
 N8N_INSTANCE_OWNER_EMAIL=[[N8N_INSTANCE_OWNER_EMAIL]]
 N8N_INSTANCE_OWNER_FIRST_NAME=[[N8N_INSTANCE_OWNER_FIRST_NAME]]
 N8N_INSTANCE_OWNER_LAST_NAME=[[N8N_INSTANCE_OWNER_LAST_NAME]]
-N8N_INSTANCE_OWNER_PASSWORD_HASH=[[N8N_INSTANCE_OWNER_PASSWORD_HASH]]
+N8N_INSTANCE_OWNER_PASSWORD_HASH='[[N8N_INSTANCE_OWNER_PASSWORD_HASH]]'
 """

@@ -159,6 +159,16 @@ may fail more silently (e.g. an app just treating the placeholder as a literal p
 Always verify Variables actually exist in Komodo before the first deploy of a Stack using
 this pattern, don't assume the sync/deploy will surface a missing one for you.
 
+**A secret value containing a literal `$` (bcrypt hashes are the classic case — `$2b$12$...`)
+gets silently mangled otherwise.** Docker Compose's `env_file:` values go through the same
+`${...}`/`$VAR` interpolation as everywhere else in a compose file; an unescaped `$` is treated
+as an attempted variable reference and gets dropped if unresolved — confirmed in production: a
+bcrypt hash arrived at the container missing a `$` and truncated, and n8n rejected it as
+malformed with no indication of why. Fix at the template level, not by asking whoever enters
+the Variable to hand-escape it: wrap that line in single quotes in the `environment` block,
+e.g. `SOME_HASH='[[SOME_HASH]]'` — see `N8N_INSTANCE_OWNER_PASSWORD_HASH` in
+`komodo/stacks/n8n.toml`. The Komodo Variable itself still holds the raw, unescaped value.
+
 ## Service reference
 
 Every service is deploy-only (see above) — the authoritative config, secrets handling, and
