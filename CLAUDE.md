@@ -137,10 +137,21 @@ Raspberry Pi 4's Cortex-A72 doesn't have — `:latest` crashes on boot with `SIG
 
 See `n8n/docker-compose.yml` + `n8n/.env.example`. Official image, SQLite (enough for a
 single instance), reachable only over the LAN by mDNS hostname (`http://lab56.local:5678`) —
-the `cloudflared/` tunnel on lab53 is what exposes it publicly, not this compose file. The first
-user is created via n8n's own signup UI (since v1.0 there's no basic auth or way to disable
-login). `N8N_ENCRYPTION_KEY` is critical: generate it once and never touch it again — changing
-it breaks decryption of already-saved credentials.
+the `cloudflared/` tunnel on lab53 is what exposes it publicly, not this compose file. Pinned
+to `2.29.8` (major bump from `1.81.0`, reviewed manually per the Renovate major policy — see
+[n8n v2.0 breaking changes](https://docs.n8n.io/changelog/v20-breaking-changes); nothing else
+in the compose needed to change for it).
+
+Like cups (see below), nothing sensitive is hand-copied into a `.env` on lab56:
+`komodo/stacks/n8n.toml` declares `run_directory`/`file_paths` scoped to `n8n/` and an
+`environment` block that interpolates secrets from Komodo Variables at deploy time.
+`N8N_ENCRYPTION_KEY` is critical — generate once with `openssl rand -hex 32` and never touch
+it again, changing it breaks decryption of already-saved credentials. The instance owner is
+also pre-provisioned via env vars (`N8N_INSTANCE_OWNER_MANAGED_BY_ENV=true`, n8n v2.17.0+)
+instead of n8n's in-app signup UI: `N8N_INSTANCE_OWNER_EMAIL`/`PASSWORD_HASH` interpolate from
+Komodo Variables (`PASSWORD_HASH` marked secret) — the value must be a **bcrypt hash**, not a
+plaintext password (generate with e.g. `htpasswd -bnBC 10 "" 'your-password' | cut -d: -f2`).
+`n8n/.env.example` is kept only as a fallback reference for deploying by hand outside Komodo.
 
 ## Deploying CUPS/AirPrint bridge (lab56)
 
@@ -250,8 +261,12 @@ into `cloudflared/.env` first and retiring the manual one, or you'll end up runn
 - Connect the rest of the fleet following `komodo/CONNECT-SERVERS.md`.
 - Manual bootstrap of the first `ResourceSync` in the Komodo UI (it can't self-create from a
   file it isn't reading yet) + register the GitHub webhook toward its listener.
-- On `lab56`: copy `n8n/.env.example` to `.env`, generate `N8N_ENCRYPTION_KEY`,
-  `mkdir -p local-files`, and `docker compose up -d`.
+- On `lab56`: `mkdir -p local-files` (no `.env` copy needed, see below).
+- In Komodo (Settings > Variables), create `N8N_ENCRYPTION_KEY` (generate with
+  `openssl rand -hex 32`, mark "secret") and `N8N_INSTANCE_OWNER_EMAIL`/
+  `_FIRST_NAME`/`_LAST_NAME`/`_PASSWORD_HASH` (`PASSWORD_HASH` is a **bcrypt hash**, not a
+  plaintext password — mark it "secret") — interpolated into the `n8n` Stack's `environment`
+  via `komodo/stacks/n8n.toml`.
 - Configure the GitHub webhook toward the `n8n` Stack's `/deploy` in Komodo.
 - In Komodo (Settings > Variables), create `CUPS_ADMIN_USER` and `CUPS_ADMIN_PASSWORD`
   (mark `CUPS_ADMIN_PASSWORD` "secret") — interpolated into the `cups` Stack's `environment`

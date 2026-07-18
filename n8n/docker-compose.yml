@@ -11,7 +11,9 @@
 services:
   n8n:
     # Pinned literal tag (not an env var) so Renovate can see and bump it directly.
-    image: docker.n8n.io/n8nio/n8n:1.81.0
+    # v2.x: major bump from 1.81.0, reviewed manually per the Renovate major-version
+    # policy — see the n8n v2.0 breaking-changes note in CLAUDE.md.
+    image: docker.n8n.io/n8nio/n8n:2.29.8
     restart: unless-stopped
     ports:
       - "5678:5678"

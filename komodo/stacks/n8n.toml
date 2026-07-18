@@ -14,4 +14,37 @@ server = "lab56"
 git_provider = "github.com"
 repo = "hec7orci7o/svc-hub"
 branch = "main"
-file_paths = ["n8n/docker-compose.yml"]
+# run_directory + relative file_paths (see the same note in komodo/stacks/cups.toml) so
+# the .env this Stack writes lands in n8n/, where env_file: ./.env expects it.
+run_directory = "n8n"
+file_paths = ["docker-compose.yml"]
+
+# N8N_ENCRYPTION_KEY is never hardcoded here: [[N8N_ENCRYPTION_KEY]] interpolates from a
+# Komodo Variable (Settings > Variables, marked "secret") at deploy time. Komodo writes
+# the resolved content to n8n/.env before `docker compose up -d`, which env_file: ./.env
+# in n8n/docker-compose.yml then reads — no manual .env needed on lab56 for this service.
+# Generate the value once with `openssl rand -hex 32` and never change it afterward (see
+# CLAUDE.md) — changing it breaks decryption of already-saved credentials.
+environment = """
+GENERIC_TIMEZONE=Europe/Madrid
+TZ=Europe/Madrid
+
+N8N_HOST=lab56.local
+N8N_PORT=5678
+N8N_PROTOCOL=http
+WEBHOOK_URL=http://lab56.local:5678/
+
+N8N_ENCRYPTION_KEY=[[N8N_ENCRYPTION_KEY]]
+
+N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+N8N_RUNNERS_ENABLED=true
+N8N_RESTRICT_FILE_ACCESS_TO=/files
+
+NODE_ENV=production
+
+N8N_INSTANCE_OWNER_MANAGED_BY_ENV=true
+N8N_INSTANCE_OWNER_EMAIL=[[N8N_INSTANCE_OWNER_EMAIL]]
+N8N_INSTANCE_OWNER_FIRST_NAME=[[N8N_INSTANCE_OWNER_FIRST_NAME]]
+N8N_INSTANCE_OWNER_LAST_NAME=[[N8N_INSTANCE_OWNER_LAST_NAME]]
+N8N_INSTANCE_OWNER_PASSWORD_HASH=[[N8N_INSTANCE_OWNER_PASSWORD_HASH]]
+"""
