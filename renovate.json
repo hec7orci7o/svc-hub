@@ -34,6 +34,13 @@
       "matchPackageNames": ["adguard/adguardhome"],
       "matchUpdateTypes": ["minor"],
       "automerge": false
+    },
+    {
+      "matchManagers": ["docker-compose"],
+      "matchFileNames": ["komodo/core/docker-compose.yml"],
+      "matchPackageNames": ["mongo"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
     }
   ]
 }
