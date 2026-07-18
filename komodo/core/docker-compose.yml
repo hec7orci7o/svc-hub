@@ -1,26 +1,18 @@
-# Komodo Core v2 deployment for lab53 — Core + Mongo + local Periphery.
-# Based literally on https://github.com/moghtech/komodo/blob/main/compose/mongo.compose.yaml
-# Copy this directory to lab53, create .env from .env.example,
-# then run: docker compose up -d
-# (docker compose loads ./.env automatically, both to interpolate ${VARS}
-# here and to inject them into the container via env_file: ./.env)
+# Komodo Core v2 — Core + Mongo + local Periphery, based on
+# https://github.com/moghtech/komodo/blob/main/compose/mongo.compose.yaml
+# Create .env from .env.example, then docker compose up -d.
 
 services:
   mongo:
-    # ponytail: MongoDB 5.0+ requires ARMv8.2-A; Raspberry Pi 4 (Cortex-A72) is only
-    # ARMv8.0-A, so :latest SIGILL-crashes on boot. 4.4.18 is the last official arm64
-    # build that runs on this hardware (series is EOL since 2024-02, no security
-    # patches). Upgrade path: move Mongo to a Pi 5 (Cortex-A76, ARMv8.2-A) or a non-Pi
-    # host if a newer, patched MongoDB is ever needed.
+    # ponytail: Mongo 5.0+ needs ARMv8.2-A; Pi 4 (Cortex-A72) is only ARMv8.0-A, so :latest
+    # SIGILL-crashes. 4.4.18 is the last arm64 build that runs here (EOL, unpatched).
+    # Upgrade path: a Pi 5 (ARMv8.2-A) or non-Pi host.
     image: mongo:4.4.18
     labels:
       komodo.skip: # prevents Komodo from stopping this container via StopAllContainers
     command: --quiet --wiredTigerCacheSizeGB 0.25
     restart: unless-stopped
-    # No cap_drop here: the official entrypoint needs root-level capabilities
-    # (chown/setuid/setgid) at startup to init the data dir and then drop to the
-    # mongodb user — dropping ALL breaks that. no-new-privileges is still safe on
-    # top of it, since it doesn't block a root-initiated setuid.
+    # No cap_drop: entrypoint needs root (chown/setuid) to init the data dir.
     security_opt:
       - no-new-privileges:true
     volumes:
@@ -31,9 +23,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${KOMODO_DATABASE_PASSWORD}
 
   core:
-    # Pinned literal tag (not an env var) so Renovate can see and bump it directly.
-    # Must stay in lockstep with periphery's tag below — Komodo releases Core and
-    # Periphery together with matching versions.
+    # Pinned literal tag. Must stay in lockstep with periphery's tag below (matched pair).
     image: ghcr.io/moghtech/komodo-core:2.2.0
     init: true
     restart: unless-stopped
@@ -53,9 +43,7 @@ services:
       - ${COMPOSE_KOMODO_BACKUPS_PATH}:/backups
       # - /path/to/syncs:/syncs
 
-  # Periphery for the lab53 host itself (so Komodo also monitors/manages it).
-  # For the rest of the Raspberry Pi fleet, use the setup-periphery.py systemd
-  # script (see ../CONNECT-SERVERS.md) — Komodo's recommended method for remote hosts.
+  # Periphery for this host itself; for the rest of the fleet see ../CONNECT-SERVERS.md.
   periphery:
     # Must stay in lockstep with core's tag above.
     image: ghcr.io/moghtech/komodo-periphery:2.2.0
@@ -64,10 +52,8 @@ services:
     depends_on:
       - core
     env_file: ./.env
-    # No cap_drop here: it needs full access to the host's docker.sock and /proc to
-    # manage containers and report host stats — that's the whole point of Periphery,
-    # and it's effectively root-on-host already via the socket regardless of Linux
-    # capabilities. no-new-privileges is still worth keeping.
+    # No cap_drop: needs docker.sock/proc access — the whole point of Periphery, and
+    # already effectively root-on-host via the socket regardless of capabilities.
     security_opt:
       - no-new-privileges:true
     volumes:

@@ -1,18 +1,9 @@
-# n8n deployment (official docker.n8n.io/n8nio/n8n image) on lab56.
-# Deploy-only: no Dockerfile or build of our own, same as komodo/core.
-# Reachable directly by LAN IP:port; public exposure (if any) goes through the
-# cloudflared/ tunnel on lab53, not through a reverse proxy in this compose file.
-# Copy .env.example to .env and fill it in before:
-#   mkdir -p local-files   (create it by hand to get the right owner/permissions)
-#   docker compose up -d
-# (docker compose loads ./.env automatically, both to interpolate ${VARS}
-# here and to inject them into the container via env_file: ./.env)
+# n8n (official docker.n8n.io/n8nio/n8n image). Deploy-only, no build of our own.
+# Copy .env.example to .env, mkdir -p local-files, then docker compose up -d.
 
 services:
   n8n:
     # Pinned literal tag (not an env var) so Renovate can see and bump it directly.
-    # v2.x: major bump from 1.81.0, reviewed manually per the Renovate major-version
-    # policy — see the n8n v2.0 breaking-changes note in CLAUDE.md.
     image: docker.n8n.io/n8nio/n8n:2.29.8
     restart: unless-stopped
     ports:

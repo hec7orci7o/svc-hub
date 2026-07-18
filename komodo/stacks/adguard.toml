@@ -1,8 +1,5 @@
-# Schema confirmed at https://komo.do/docs/automate/sync-resources
-#
-# Deploy-only, like every service in this hub: redeploy is triggered by a GitHub
-# webhook pointed directly at this Stack's /deploy listener (copy the URL from
-# the Komodo UI, Stack Config > Webhooks). No build, no GitHub Actions workflow involved.
+# Schema: https://komo.do/docs/automate/sync-resources
+# Deploy-only: redeploy triggers via this Stack's /deploy webhook, no CI involved.
 
 [[stack]]
 name = "adguard"

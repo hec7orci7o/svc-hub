@@ -1,17 +1,11 @@
-# Cloudflare Tunnel: the hub's only public ingress. It makes an outbound-only connection to
-# Cloudflare, so no inbound port needs to be forwarded on any router for any service.
-# Hostname -> internal service routing (Public Hostname rules) is configured in the Cloudflare
-# Zero Trust dashboard, not here — this container just runs the tunnel client.
-# Deploy-only: no Dockerfile, official image, same pattern as n8n/ and komodo/core/.
-# Copy .env.example to .env and fill in the tunnel token before: docker compose up -d
-# (docker compose loads ./.env automatically, both to interpolate ${VARS} here
-# and to inject them into the container via env_file: ./.env)
+# Cloudflare Tunnel: the hub's only public ingress (outbound-only, no router port-forwarding
+# needed). Hostname routing lives in the Cloudflare Zero Trust dashboard, not here.
+# Deploy-only. Copy .env.example to .env with the real tunnel token, then docker compose up -d.
 #
-# NOT DEPLOYED YET, ON PURPOSE: lab53 already runs a cloudflared tunnel started manually
-# outside this repo (unpinned :latest, predates this hub). komodo/stacks/cloudflared.toml
-# exists so it shows up in Komodo, but its /deploy webhook is deliberately not registered
-# in GitHub — deploying this without first migrating the real TUNNEL_TOKEN from the manual
-# container into .env here and retiring the manual one leaves two tunnels running at once.
+# NOT DEPLOYED YET, ON PURPOSE: a manual tunnel (unpinned :latest) predating this hub is
+# already running. This Stack's /deploy webhook is deliberately unregistered in GitHub —
+# deploying without first migrating the real TUNNEL_TOKEN and retiring the manual one means
+# two tunnels running at once.
 
 services:
   cloudflared:

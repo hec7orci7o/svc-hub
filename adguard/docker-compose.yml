@@ -1,24 +1,13 @@
-# AdGuard Home — network-wide DNS ad/tracker blocker (official adguard/adguardhome image) on
-# lab53, alongside Komodo Core/cloudflared/scanopy. Deploy-only, same pattern as every other
-# service in this hub — no build of our own.
+# AdGuard Home (official adguard/adguardhome image). Deploy-only, no build of our own.
 #
-# HOST PREP REQUIRED BEFORE FIRST DEPLOY, on lab53: Raspberry Pi OS ships systemd-resolved,
-# which binds 127.0.0.53:53 by default and blocks this container from binding host port 53.
-#   sudo mkdir -p /etc/systemd/resolved.conf.d
+# Host prep before first deploy: disable systemd-resolved's stub listener or this can't
+# bind host port 53 ("address already in use"):
 #   printf '[Resolve]\nDNS=127.0.0.1\nDNSStubListener=no\n' | sudo tee /etc/systemd/resolved.conf.d/adguardhome.conf
-#   sudo rm -f /etc/resolv.conf
-#   sudo ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
+#   sudo rm -f /etc/resolv.conf && sudo ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
 #   sudo systemctl reload-or-restart systemd-resolved
-# Without this, the container exits immediately with "address already in use" on port 53.
 #
-# No env vars, no .env.example, no config file: the admin username/password is set once via
-# the interactive setup wizard at http://lab53.local:3000 on first boot. Same trade-off as
-# Odoo's admin_passwd — AdGuard has no env-var/CLI way to pre-seed credentials without a
-# manually-managed AdGuardHome.yaml, which Komodo can't write automatically (see CLAUDE.md),
-# so this deploys with zero manual file creation and one manual browser step instead.
-#
-# Pointing LAN devices/router at this as their DNS server is a router-config change outside
-# this repo (per the "no real network details committed" rule — see CLAUDE.md).
+# No env vars/config file: admin credentials are set once via the setup wizard on :3000 on
+# first boot (same trade-off as Odoo's admin_passwd — see CLAUDE.md).
 
 services:
   adguard:
@@ -37,10 +26,8 @@ services:
       options:
         max-size: 10m
         max-file: "3"
-    # No official HEALTHCHECK ships upstream (removed in v0.107.34 after causing restart
-    # loops under autoheal — see github.com/AdguardTeam/AdGuardHome/discussions/5939; the
-    # maintainers' own advice is to build a custom image if you need one). Skipped rather
-    # than guessing at an unverified probe command for this image.
+    # No HEALTHCHECK: upstream removed theirs in v0.107.34 (caused restart loops), no
+    # replacement exists.
     security_opt:
       - no-new-privileges:true
     cap_drop:

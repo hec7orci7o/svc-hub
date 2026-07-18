@@ -1,8 +1,5 @@
-# TREK — self-hosted collaborative travel planner (mauriceboe/trek image) on lab54.
-# Deploy-only, same pattern as every other service in this hub — no build of our own.
-# Copy .env.example to .env and fill it in before:
-#   mkdir -p data uploads   (create by hand to get the right owner/permissions)
-#   docker compose up -d
+# TREK — collaborative travel planner (mauriceboe/trek image). Deploy-only, no build.
+# Copy .env.example to .env, mkdir -p data uploads, then docker compose up -d.
 
 services:
   trek:

@@ -1,8 +1,5 @@
-# BloodHound CE — Active Directory attack path analysis (specterops/bloodhound image) on
-# lab58, sharing the board with sysreptor. Deploy-only, same pattern as every other service
-# in this hub — no build of our own.
-# Copy .env.example to .env and fill it in before:
-#   docker compose up -d
+# BloodHound CE (official specterops/bloodhound image). Deploy-only, no build of our own.
+# Copy .env.example to .env, then docker compose up -d.
 
 services:
   app-db:
@@ -13,8 +10,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-bloodhound}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Please set POSTGRES_PASSWORD in .env file}
       POSTGRES_DB: ${POSTGRES_DB:-bloodhound}
-    # Deliberately not published to the host — same DB-isolation pattern as odoo/scanopy's
-    # Postgres. Only the bloodhound app service below is reachable over the LAN.
+    # Not published to the host — only `bloodhound` below is reachable over the LAN.
     volumes:
       - app-db-data:/var/lib/postgresql
     healthcheck:
@@ -28,23 +24,21 @@ services:
       options:
         max-size: 10m
         max-file: "3"
-    # No cap_drop here: same startup chown/setuid exception as Mongo/Postgres elsewhere
-    # in this hub — official entrypoint needs it to init the data dir.
+    # No cap_drop: entrypoint needs root to init the data dir, same as Mongo's.
     security_opt:
       - no-new-privileges:true
 
   graph-db:
-    # Pinned to the 4.4 line on purpose: BloodHound CE's graph schema targets this Neo4j
-    # major, not the newer 5.x line — don't bump this ahead of upstream's own compose.
-    # See the renovate.json packageRule keeping minor bumps here off automerge.
+    # Pinned to the 4.4 line: BloodHound CE's graph schema targets it, not 5.x (renovate.json
+    # keeps minor bumps off automerge here).
     image: neo4j:4.4.42
     restart: unless-stopped
     environment:
+      # NEO4J_AUTH is parsed as user/password — NEO4J_SECRET must be hex, not base64 (a "/"
+      # breaks the split; confirmed in production). See .env.example.
       NEO4J_AUTH: ${NEO4J_USER:-neo4j}/${NEO4J_SECRET:?Please set NEO4J_SECRET in .env file}
       NEO4J_dbms_allow__upgrade: "true"
-    # Deliberately not published to the host, same reasoning as app-db — the Neo4j browser
-    # is a second attack surface on top of the BloodHound UI itself. Only open this up
-    # manually, and only after changing NEO4J_SECRET, per upstream's own warning.
+    # Not published to the host, same as app-db — Neo4j's browser is a second attack surface.
     volumes:
       - graph-db-data:/data
     healthcheck:
@@ -58,7 +52,7 @@ services:
       options:
         max-size: 10m
         max-file: "3"
-    # No cap_drop here: same startup chown/setuid exception as the Postgres services above.
+    # No cap_drop: same reason as app-db above.
     security_opt:
       - no-new-privileges:true
 

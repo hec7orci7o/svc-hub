@@ -1,10 +1,7 @@
-# SysReptor — pentest reporting platform (syslifters/sysreptor image) on lab58.
-# Deploy-only, same pattern as every other service in this hub — no build of our own.
-# Note: upstream's own install.sh generates a compose with `build: ../../` next to
-# `image:`, which builds the image locally instead of just pulling it. Omitted here on
-# purpose — `image:` alone pulls the exact same tag they publish on Docker Hub.
-# Copy .env.example to .env and fill it in before:
-#   docker compose up -d
+# SysReptor — pentest reporting platform (syslifters/sysreptor image). Deploy-only.
+# Upstream's install.sh adds `build: ../../` next to `image:`; omitted here on purpose —
+# `image:` alone pulls the same tag they publish.
+# Copy .env.example to .env, then docker compose up -d.
 
 services:
   db:
@@ -27,9 +24,7 @@ services:
       options:
         max-size: 10m
         max-file: "3"
-    # No cap_drop here: same startup chown/setuid exception as Mongo/Postgres elsewhere
-    # in this hub (komodo/core, odoo/, scanopy/) — official entrypoint needs it to init
-    # the data dir.
+    # No cap_drop: entrypoint needs root to init the data dir, same as Mongo's.
     security_opt:
       - no-new-privileges:true
 

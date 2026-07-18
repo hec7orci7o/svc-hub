@@ -1,17 +1,10 @@
-# Odoo (official image) + Postgres on lab57.
-# Deploy-only, same pattern as every other service in this hub — no build of our own.
-# Copy .env.example to .env and fill it in before:
-#   mkdir -p addons   (create by hand to get the right owner/permissions)
-#   docker compose up -d
-# (docker compose loads ./.env automatically to interpolate ${VARS} below)
+# Odoo (official image) + Postgres. Deploy-only, no build of our own.
+# Copy .env.example to .env, mkdir -p addons, then docker compose up -d.
 #
-# No custom odoo.conf: Komodo can only auto-write .env-style files (via `environment` in
-# komodo/stacks/odoo.toml), not arbitrary config files — admin_passwd/workers/memory limits
-# have no env-var equivalent in the official image, so hand-managing a config file here would
-# mean this Stack can never deploy fully automatically. Runs on Odoo's own built-in defaults
-# instead (admin_passwd defaults to "admin", workers=0, list_db unset/exposed) — change the
-# master password via the web UI (/web/database/manager) after first boot. See CLAUDE.md for
-# the trade-off and how to reintroduce a config file later if that stops being acceptable.
+# No odoo.conf: admin_passwd/workers/memory limits have no env-var equivalent, and Komodo
+# can't auto-write arbitrary config files — see CLAUDE.md. Runs on Odoo's own defaults
+# (admin_passwd="admin", workers=0); change the master password at /web/database/manager
+# after first boot.
 
 services:
   db:
@@ -34,19 +27,15 @@ services:
     networks:
       - odoo_network
     shm_size: 512mb
-    # Tuned for lab57's 8GB. If this ever moves to a smaller board, halve
-    # shared_buffers/effective_cache_size first — this isn't capped by mem_limit
-    # (see "No resource limits" in CLAUDE.md), so an oversized value here is what
-    # would trigger the Pi's OOM killer, not a hard container ceiling.
+    # Tuned for 8GB — halve shared_buffers/effective_cache_size on a smaller board (no
+    # mem_limit caps this, see "No resource limits" in CLAUDE.md).
     command: postgres -c shared_buffers=512MB -c effective_cache_size=2GB -c work_mem=16MB -c maintenance_work_mem=128MB -c max_connections=40 -c autovacuum=on
     logging:
       driver: json-file
       options:
         max-size: 10m
         max-file: "3"
-    # No cap_drop here: the official entrypoint needs root-level capabilities (chown/setuid)
-    # at startup to init the data dir and then drop to the postgres user — same exception
-    # as Mongo's in komodo/core/docker-compose.yml. no-new-privileges is still safe on top.
+    # No cap_drop: entrypoint needs root to init the data dir, same as Mongo's.
     security_opt:
       - no-new-privileges:true
 

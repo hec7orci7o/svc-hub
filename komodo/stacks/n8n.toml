@@ -1,8 +1,5 @@
-# Schema confirmed at https://komo.do/docs/automate/sync-resources
-#
-# Deploy-only, like every service in this hub: redeploy is triggered by a GitHub
-# webhook pointed directly at this Stack's /deploy listener (copy the URL from
-# the Komodo UI, Stack Config > Webhooks). No build, no GitHub Actions workflow involved.
+# Schema: https://komo.do/docs/automate/sync-resources
+# Deploy-only: redeploy triggers via this Stack's /deploy webhook, no CI involved.
 
 [[stack]]
 name = "n8n"
@@ -14,26 +11,20 @@ server = "lab56"
 git_provider = "github.com"
 repo = "hec7orci7o/svc-hub"
 branch = "main"
-# run_directory + relative file_paths (see the same note in komodo/stacks/cups.toml) so
-# the .env this Stack writes lands in n8n/, where env_file: ./.env expects it.
 run_directory = "n8n"
 file_paths = ["docker-compose.yml"]
 
-# Secrets/gotchas explained in CLAUDE.md's "Secrets via Komodo Variables" section.
-# N8N_ENCRYPTION_KEY: generate once with `openssl rand -hex 32`, never change it after —
-# breaks decryption of already-saved credentials.
+# Gotchas in CLAUDE.md's "Secrets via Komodo Variables". N8N_ENCRYPTION_KEY: generate once
+# with `openssl rand -hex 32`, never change — breaks decryption of saved credentials.
 environment = """
 GENERIC_TIMEZONE=Europe/Madrid
 TZ=Europe/Madrid
 
-# Public via cloudflared at this domain (not LAN-only). PROTOCOL stays http: cloudflared
-# terminates TLS and forwards http internally.
+# Public via cloudflared; PROTOCOL stays http since cloudflared terminates TLS.
 N8N_HOST=n8n.hectortoral.com
 N8N_PORT=5678
 N8N_PROTOCOL=http
 WEBHOOK_URL=http://n8n.hectortoral.com/
-# Required alongside PROTOCOL=http behind a TLS-terminating proxy, or login cookies get the
-# Secure flag and the browser drops them.
 N8N_SECURE_COOKIE=false
 
 N8N_ENCRYPTION_KEY=[[N8N_ENCRYPTION_KEY]]
@@ -41,16 +32,14 @@ N8N_ENCRYPTION_KEY=[[N8N_ENCRYPTION_KEY]]
 N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
 N8N_RESTRICT_FILE_ACCESS_TO=/files
 
-# n8n v2 blocks Code-node env access and external npm packages by default; this instance's
-# workflows rely on both being open.
+# n8n v2 blocks these by default; existing workflows depend on them.
 N8N_BLOCK_ENV_ACCESS_IN_NODE=false
 NODE_FUNCTION_ALLOW_EXTERNAL=cheerio
 
 NODE_ENV=production
 
-# PASSWORD_HASH: bcrypt hash, not a plaintext password — generate with e.g.
-#   docker run --rm httpd:alpine htpasswd -bnBC 10 "" 'your-password' | cut -d: -f2
-# Single-quoted so the Komodo Variable can hold the raw hash unescaped (see CLAUDE.md for why).
+# PASSWORD_HASH: bcrypt, e.g. `docker run --rm httpd:alpine htpasswd -bnBC 10 "" 'pw'`.
+# Single-quoted so the raw hash survives unescaped (see CLAUDE.md).
 N8N_INSTANCE_OWNER_MANAGED_BY_ENV=true
 N8N_INSTANCE_OWNER_EMAIL=[[N8N_INSTANCE_OWNER_EMAIL]]
 N8N_INSTANCE_OWNER_FIRST_NAME=[[N8N_INSTANCE_OWNER_FIRST_NAME]]

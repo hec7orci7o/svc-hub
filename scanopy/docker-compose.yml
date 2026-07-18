@@ -1,22 +1,13 @@
-# scanopy — network topology/documentation tool (ghcr.io/scanopy/scanopy images) on lab53.
-# Deploy-only, same pattern as every other service in this hub — no build of our own.
-# AGPL-3.0 for self-hosted use; see https://github.com/scanopy/scanopy for the commercial
-# license alternative if AGPL's source-disclosure requirement doesn't fit your use case.
-# Copy .env.example to .env and fill it in before:
-#   mkdir -p data
-#   docker compose up -d
+# scanopy — network topology documentation (ghcr.io/scanopy/scanopy images). Deploy-only.
+# AGPL-3.0 for self-hosted use (see upstream repo for the commercial alternative).
+# Copy .env.example to .env, mkdir -p data, then docker compose up -d.
 
 services:
   daemon:
-    # Pinned literal tag (not an env var) so Renovate can see and bump it directly.
-    # Pre-1.0 (0.x): minor bumps aren't guaranteed backwards-compatible under semver —
-    # see the packageRule in renovate.json that keeps these off automerge.
+    # Pinned literal tag. Pre-1.0 (0.x): minor bumps excluded from automerge in renovate.json.
     image: ghcr.io/scanopy/scanopy/daemon:v0.17.4
     restart: unless-stopped
-    # Host networking is required, not incidental: LAN topology discovery relies on
-    # probing the real network segment, which doesn't work from a bridge network — same
-    # reasoning as cups. docker.sock (ro) is for introspecting this host's own containers.
-    # Full host access by design; no-new-privileges is still kept on top.
+    # Host networking: LAN topology discovery needs the real network segment, not a bridge.
     network_mode: host
     privileged: true
     env_file: ./.env
@@ -60,14 +51,12 @@ services:
       options:
         max-size: 10m
         max-file: "3"
-    # No cap_drop here: same startup chown/setuid exception as Mongo/Postgres elsewhere
-    # in this hub (komodo/core, odoo/) — official entrypoint needs it to init the data dir.
+    # No cap_drop: entrypoint needs root to init the data dir, same as Mongo's.
     security_opt:
       - no-new-privileges:true
 
   server:
-    # Pinned literal tag (not an env var) so Renovate can see and bump it directly.
-    # Pre-1.0 (0.x): see the note on the daemon image above.
+    # Pinned literal tag. Pre-1.0 (0.x): see the note on the daemon image above.
     image: ghcr.io/scanopy/scanopy/server:v0.17.4
     restart: unless-stopped
     ports:

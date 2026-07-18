@@ -1,8 +1,5 @@
-# Schema confirmed at https://komo.do/docs/automate/sync-resources
-#
-# Deploy-only, like every service in this hub: redeploy is triggered by a GitHub
-# webhook pointed directly at this Stack's /deploy listener (copy the URL from
-# the Komodo UI, Stack Config > Webhooks). No build, no GitHub Actions workflow involved.
+# Schema: https://komo.do/docs/automate/sync-resources
+# Deploy-only: redeploy triggers via this Stack's /deploy webhook, no CI involved.
 
 [[stack]]
 name = "odoo"
@@ -17,10 +14,7 @@ branch = "main"
 run_directory = "odoo"
 file_paths = ["docker-compose.yml"]
 
-# No config_files/custom odoo.conf, deliberately — see the note in docker-compose.yml.
-# Registering a config file Komodo can't itself create/write blocks the Stack's Validate
-# Files step entirely if it doesn't already exist on the host, which defeats automatic
-# deploy. This Stack deploys fully from git with no manual file-creation step.
+# No config_files/odoo.conf on purpose — see docker-compose.yml.
 environment = """
 POSTGRES_DB=postgres
 POSTGRES_USER=odoo

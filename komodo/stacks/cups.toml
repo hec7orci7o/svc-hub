@@ -1,8 +1,5 @@
-# Schema confirmed at https://komo.do/docs/automate/sync-resources
-#
-# Deploy-only, like every service in this hub: redeploy is triggered by a GitHub
-# webhook pointed directly at this Stack's /deploy listener (copy the URL from
-# the Komodo UI, Stack Config > Webhooks). No build, no GitHub Actions workflow involved.
+# Schema: https://komo.do/docs/automate/sync-resources
+# Deploy-only: redeploy triggers via this Stack's /deploy webhook, no CI involved.
 
 [[stack]]
 name = "cups"
@@ -14,8 +11,6 @@ server = "lab56"
 git_provider = "github.com"
 repo = "hec7orci7o/svc-hub"
 branch = "main"
-# run_directory + relative file_paths so the .env this Stack writes lands in cups/, where
-# env_file: ./.env expects it (see CLAUDE.md's "Secrets via Komodo Variables").
 run_directory = "cups"
 file_paths = ["docker-compose.yml"]
 
@@ -42,11 +37,8 @@ AVAHI_IPV6=no
 AVAHI_REFLECTOR=no
 AVAHI_REFLECT_IPV=no
 
-# Printer setup as code (lpadmin one-liners the image runs at every startup) instead of
-# the web UI, so a redeploy doesn't lose it — not secret, so plain values, no [[...]].
-# Brother DCP-1610W (USB, serial E74230M8N868954): no exact PPD ships for it, so this uses
-# brlaser's DCP-1600 PPD, the closest sibling (`lpinfo -m | grep -i brother`); try
-# br1510.ppd instead if print quality/scaling looks off.
+# Printer setup as code (not secret, no [[...]]). Brother DCP-1610W has no exact PPD; uses
+# brlaser's DCP-1600 PPD (closest sibling). Try br1510.ppd if print quality looks off.
 CUPS_LPADMIN_PRINTER1=lpadmin -p Brother_DCP-1610W_series -D 'Brother DCP-1610W series' -m drv:///brlaser.drv/br1600.ppd -v 'usb://Brother/DCP-1610W%20series?serial=E74230M8N868954' -o printer-is-shared=true
 CUPS_LPADMIN_PRINTER1_ENABLE=cupsenable Brother_DCP-1610W_series
 CUPS_LPADMIN_PRINTER1_ACCEPT=cupsaccept Brother_DCP-1610W_series
