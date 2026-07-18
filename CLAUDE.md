@@ -136,22 +136,39 @@ Raspberry Pi 4's Cortex-A72 doesn't have — `:latest` crashes on boot with `SIG
 ## Deploying n8n (lab56)
 
 See `n8n/docker-compose.yml` + `n8n/.env.example`. Official image, SQLite (enough for a
-single instance), reachable only over the LAN by mDNS hostname (`http://lab56.local:5678`) —
-the `cloudflared/` tunnel on lab53 is what exposes it publicly, not this compose file. Pinned
-to `2.29.8` (major bump from `1.81.0`, reviewed manually per the Renovate major policy — see
-[n8n v2.0 breaking changes](https://docs.n8n.io/changelog/v20-breaking-changes); nothing else
-in the compose needed to change for it).
+single instance). **Publicly exposed today** via the `cloudflared/` tunnel on lab53 at a real
+domain (`n8n.hectortoral.com`) — despite this compose file's port binding being LAN-only by
+itself, don't assume n8n is LAN-only in practice. Pinned to `2.29.8`; this hub replaces a
+pre-existing manual deployment already running `2.3.5` (an unrelated `1.81.0` pin here
+before the migration was never what was actually live), so the real jump is a same-major
+minor bump, not the major it might look like from this repo's own history — see
+[n8n v2.0 breaking changes](https://docs.n8n.io/changelog/v20-breaking-changes) regardless,
+since `2.3.5` predates several v2 default changes. `N8N_SECURE_COOKIE=false`,
+`N8N_BLOCK_ENV_ACCESS_IN_NODE=false`, and `NODE_FUNCTION_ALLOW_EXTERNAL=cheerio` are all
+carried over from the pre-existing production `.env` on purpose — the first because
+cloudflared terminates TLS and forwards http internally, the other two because existing
+workflows already depend on that access n8n v2 would otherwise block by default.
 
 Like cups (see below), nothing sensitive is hand-copied into a `.env` on lab56:
 `komodo/stacks/n8n.toml` declares `run_directory`/`file_paths` scoped to `n8n/` and an
 `environment` block that interpolates secrets from Komodo Variables at deploy time.
-`N8N_ENCRYPTION_KEY` is critical — generate once with `openssl rand -hex 32` and never touch
-it again, changing it breaks decryption of already-saved credentials. The instance owner is
-also pre-provisioned via env vars (`N8N_INSTANCE_OWNER_MANAGED_BY_ENV=true`, n8n v2.17.0+)
-instead of n8n's in-app signup UI: `N8N_INSTANCE_OWNER_EMAIL`/`PASSWORD_HASH` interpolate from
-Komodo Variables (`PASSWORD_HASH` marked secret) — the value must be a **bcrypt hash**, not a
-plaintext password (generate with e.g. `htpasswd -bnBC 10 "" 'your-password' | cut -d: -f2`).
-`n8n/.env.example` is kept only as a fallback reference for deploying by hand outside Komodo.
+`N8N_ENCRYPTION_KEY` is critical: for this migration it must be the exact key n8n already
+generated for itself (extract with
+`docker run --rm -v n8n_n8n_data:/data alpine cat /data/config` on lab56), never a freshly
+generated one — that key encrypts already-saved credentials, and a fresh key can no longer
+decrypt them (only generate a new one with `openssl rand -hex 32` for a genuinely new
+instance with no existing data). The instance owner is also pre-provisioned via env vars
+(`N8N_INSTANCE_OWNER_MANAGED_BY_ENV=true`, n8n v2.17.0+) instead of n8n's in-app signup UI:
+`N8N_INSTANCE_OWNER_EMAIL`/`PASSWORD_HASH` interpolate from Komodo Variables (`PASSWORD_HASH`
+marked secret) — the value must be a **bcrypt hash**, not a plaintext password (generate with
+e.g. `htpasswd -bnBC 10 "" 'your-password' | cut -d: -f2`), and `EMAIL` must match whatever
+owner account already exists on the instance (n8n docs: this updates the existing owner, it
+doesn't create or merge accounts). `n8n/.env.example` is kept only as a fallback reference for
+deploying by hand outside Komodo.
+
+The pre-existing manual deployment's healthcheck was permanently `unhealthy` because it used
+`curl`, which isn't in the n8n image — this repo's healthcheck already uses `wget` instead, so
+that resolves itself on migration without any action needed.
 
 ## Deploying CUPS/AirPrint bridge (lab56)
 
@@ -262,11 +279,18 @@ into `cloudflared/.env` first and retiring the manual one, or you'll end up runn
 - Manual bootstrap of the first `ResourceSync` in the Komodo UI (it can't self-create from a
   file it isn't reading yet) + register the GitHub webhook toward its listener.
 - On `lab56`: `mkdir -p local-files` (no `.env` copy needed, see below).
-- In Komodo (Settings > Variables), create `N8N_ENCRYPTION_KEY` (generate with
-  `openssl rand -hex 32`, mark "secret") and `N8N_INSTANCE_OWNER_EMAIL`/
-  `_FIRST_NAME`/`_LAST_NAME`/`_PASSWORD_HASH` (`PASSWORD_HASH` is a **bcrypt hash**, not a
-  plaintext password — mark it "secret") — interpolated into the `n8n` Stack's `environment`
-  via `komodo/stacks/n8n.toml`.
+- **n8n/cups migration-specific**: both already run manually on lab56 with real data. Their
+  named volumes (`n8n_n8n_data`, `cups_cups_config`) already match the names Komodo's
+  `run_directory`-scoped deploy will produce, so no volume renaming is needed — but stop each
+  pre-existing container (`docker stop n8n` / `docker stop cups_airprint`) right before that
+  Stack's first Komodo deploy, or the new container fails to bind the same port
+  (n8n `5678`) / host resources (cups `network_mode: host`). Don't delete the old containers
+  or volumes until the new deploy is verified working.
+- In Komodo (Settings > Variables), create `N8N_ENCRYPTION_KEY` (the exact existing key, see
+  above — not freshly generated) and `N8N_INSTANCE_OWNER_EMAIL`/`_FIRST_NAME`/`_LAST_NAME`/
+  `_PASSWORD_HASH` (`PASSWORD_HASH` is a **bcrypt hash**, not a plaintext password; mark
+  `N8N_ENCRYPTION_KEY` and `PASSWORD_HASH` "secret") — interpolated into the `n8n` Stack's
+  `environment` via `komodo/stacks/n8n.toml`.
 - Configure the GitHub webhook toward the `n8n` Stack's `/deploy` in Komodo.
 - In Komodo (Settings > Variables), create `CUPS_ADMIN_USER` and `CUPS_ADMIN_PASSWORD`
   (mark `CUPS_ADMIN_PASSWORD` "secret") — interpolated into the `cups` Stack's `environment`

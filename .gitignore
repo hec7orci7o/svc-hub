@@ -11,6 +11,9 @@ trek/data/
 trek/uploads/
 scanopy/data/
 
+# Scratch (may contain real secrets pasted during migration/debugging — never commit)
+.scratch/
+
 # OS
 .DS_Store
 

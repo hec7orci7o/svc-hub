@@ -23,16 +23,25 @@ file_paths = ["docker-compose.yml"]
 # Komodo Variable (Settings > Variables, marked "secret") at deploy time. Komodo writes
 # the resolved content to n8n/.env before `docker compose up -d`, which env_file: ./.env
 # in n8n/docker-compose.yml then reads — no manual .env needed on lab56 for this service.
-# Generate the value once with `openssl rand -hex 32` and never change it afterward (see
-# CLAUDE.md) — changing it breaks decryption of already-saved credentials.
+# MIGRATION: this hub replaces a pre-existing manual n8n deployment on lab56 that already
+# has real data — do NOT generate a fresh key. Use the exact value n8n already generated
+# for itself, extracted from the live volume with:
+#   docker run --rm -v n8n_n8n_data:/data alpine cat /data/config
+# A wrong/new key makes every already-saved credential undecryptable.
 environment = """
 GENERIC_TIMEZONE=Europe/Madrid
 TZ=Europe/Madrid
 
-N8N_HOST=lab56.local
+# Real public host/webhook URL (already live via cloudflared at this domain — this was
+# never LAN-only despite the original n8n/.env.example assumption). PROTOCOL stays http:
+# cloudflared terminates TLS and forwards http internally, same as the pre-existing setup.
+N8N_HOST=n8n.hectortoral.com
 N8N_PORT=5678
 N8N_PROTOCOL=http
-WEBHOOK_URL=http://lab56.local:5678/
+WEBHOOK_URL=http://n8n.hectortoral.com/
+# Required alongside PROTOCOL=http behind a TLS-terminating proxy — without this, login
+# cookies get the Secure flag and the browser silently drops them over plain http.
+N8N_SECURE_COOKIE=false
 
 N8N_ENCRYPTION_KEY=[[N8N_ENCRYPTION_KEY]]
 
@@ -40,8 +49,18 @@ N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
 N8N_RUNNERS_ENABLED=true
 N8N_RESTRICT_FILE_ACCESS_TO=/files
 
+# Carried over from the pre-existing deployment's .env so existing workflows don't break
+# silently under n8n v2's stricter defaults (Code nodes block env access and external
+# npm packages by default in v2 — this instance already relies on both being open).
+N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+NODE_FUNCTION_ALLOW_EXTERNAL=cheerio
+
 NODE_ENV=production
 
+# MIGRATION: N8N_INSTANCE_OWNER_EMAIL must match the email of the owner account that
+# ALREADY exists in this instance (n8n docs: this updates the existing owner, it does not
+# create or merge accounts) — check Settings > Users in the current n8n UI before setting
+# the Komodo Variable, don't assume/invent an address.
 N8N_INSTANCE_OWNER_MANAGED_BY_ENV=true
 N8N_INSTANCE_OWNER_EMAIL=[[N8N_INSTANCE_OWNER_EMAIL]]
 N8N_INSTANCE_OWNER_FIRST_NAME=[[N8N_INSTANCE_OWNER_FIRST_NAME]]
