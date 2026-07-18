@@ -48,4 +48,20 @@ AVAHI_INTERFACES=
 AVAHI_IPV6=no
 AVAHI_REFLECTOR=no
 AVAHI_REFLECT_IPV=no
+
+# Printer setup, committed as code instead of configured by hand through the web UI —
+# these are lpadmin one-liners the image runs at every startup, not secrets, so they're
+# plain values here (no [[...]] needed). This is the image's own documented "pass lpadmin
+# via environment" pattern; the alternative (export printers.conf/.ppd into a custom image
+# with a Dockerfile) was rejected since it breaks this hub's deploy-only rule.
+#
+# Brother DCP-1610W series (USB, serial E74230M8N868954). No exact PPD ships for this
+# model — `lpinfo --make-and-model` found none — so this uses drv:///brlaser.drv/br1600.ppd
+# (Brother DCP-1600 series): the 1610W is the Wi-Fi variant of the same print engine, and
+# brlaser's DCP-1600 PPD is the closest match `lpinfo -m | grep -i brother` returned on
+# this image. If print quality/scaling looks off, br1510.ppd is the other close sibling
+# worth trying.
+CUPS_LPADMIN_PRINTER1=lpadmin -p Brother_DCP-1610W_series -D 'Brother DCP-1610W series' -m drv:///brlaser.drv/br1600.ppd -v 'usb://Brother/DCP-1610W%20series?serial=E74230M8N868954' -o printer-is-shared=true
+CUPS_LPADMIN_PRINTER1_ENABLE=cupsenable Brother_DCP-1610W_series
+CUPS_LPADMIN_PRINTER1_ACCEPT=cupsaccept Brother_DCP-1610W_series
 """
