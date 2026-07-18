@@ -51,12 +51,11 @@ Use the `service-scaffolder` subagent, or by hand:
 
 ## No resource limits, on purpose
 
-Services don't set `mem_limit`/`cpus` — a hard `mem_limit` below what a service actually needs
-OOM-kills it outright (that's exactly what happened with n8n at `1g`, below its own documented
-2GB floor); without a limit, the Pi's own memory pressure/OOM killer handles it instead. If a
-future need for real limits comes up, use Compose's `mem_limit`/`cpus` shorthand, not
-`deploy.resources.limits` — the Compose CLI ignores that field unless `--compatibility` is
-passed, since it's only native in Swarm mode, so it would look configured without applying.
+Services don't set `mem_limit`/`cpus` — a hard `mem_limit` below what a service needs OOM-kills
+it outright (happened with n8n at `1g`, below its documented 2GB floor); without a limit, the
+Pi's own OOM killer handles it instead. If limits are ever needed, use Compose's
+`mem_limit`/`cpus` shorthand, not `deploy.resources.limits` — Compose CLI ignores that field
+without `--compatibility` (it's Swarm-only), so it'd look configured without applying.
 
 ## Compose security baseline
 
@@ -107,67 +106,42 @@ docker compose -f <folder>/docker-compose.yml config   # validate syntax
 
 ## Renovate
 
-Decision: **GitHub App hosted**, not self-hosted. `renovate.json` at the root is all the config
-needed; GitHub runs the scans, no container to maintain. It covers by default any
-`docker-compose.yml` in the repo (`komodo/core/`, `n8n/`, `cloudflared/`, and any future
-service folder) — see the coverage rule above for why versions must be pinned as literals in
-compose. For Komodo, majors (e.g. `:2` → `:3`) still skip automerge via the existing
-`packageRule` — intentional, since a Komodo major can bring incompatible changes that need
-manual review. scanopy's daemon/server images get their own extra `packageRule` that also
-excludes minors from automerge — they're pre-1.0, where a semver minor isn't guaranteed
-backwards-compatible. `bloodhound-ce/`'s `neo4j` image gets the same minor-automerge exclusion,
-scoped to that file only, since it's pinned to the 4.4 line for BloodHound CE's graph schema
-rather than for architecture/stability reasons.
+**GitHub App hosted**, not self-hosted — `renovate.json` is all the config needed, no
+container to maintain. Covers any `docker-compose.yml` in the repo by default (see the
+coverage rule above for why tags must be pinned as literals). Automerge exceptions in
+`renovate.json`: Komodo majors (breaking changes need review), scanopy's daemon/server minors
+(pre-1.0, semver minors not guaranteed compatible), `bloodhound-ce`'s `neo4j` minors (pinned
+to the 4.4 line for BloodHound's graph schema).
 
-**Manual step not yet done:** `platformAutomerge: true` in `renovate.json` requires "Allow
-auto-merge" to be enabled in the GitHub repo settings (Settings > General > Pull Requests).
-Without it, Renovate's patch/minor PRs will open but never actually merge themselves.
+**Manual step not yet done:** `platformAutomerge: true` needs "Allow auto-merge" enabled in
+GitHub repo settings (Settings > General > Pull Requests), or patch/minor PRs open but never
+merge.
 
 ## Secrets via Komodo Variables
 
-Default pattern for any secret a service needs (not just `.env` filled by hand on the host):
-declare an `environment` block in that service's `komodo/stacks/<name>.toml`, containing the
-full `.env`-style content that service needs, with secrets referenced as `[[VARIABLE_NAME]]`
-instead of literal values. Komodo resolves those against Settings > Variables (mark the
-sensitive ones "secret" — masks them in logs/UI, doesn't block non-admin access on a
-single-admin instance) and writes the result to a `.env` file on the host itself right before
-`docker compose up -d`, which the service's own `env_file: ./.env` then reads. No hand-copied
-`.env` needed on the host for anything covered this way. `komodo/stacks/n8n.toml` and
-`komodo/stacks/cups.toml` are the reference examples.
+Default pattern for any secret a service needs: an `environment` block in that service's
+`komodo/stacks/<name>.toml`, referencing secrets as `[[VARIABLE_NAME]]` instead of literal
+values. Komodo resolves those against Settings > Variables (mark sensitive ones "secret") and
+writes the result to `.env` on the host right before `docker compose up -d` — no hand-copied
+`.env` needed. Reference examples: `komodo/stacks/n8n.toml`, `komodo/stacks/cups.toml`.
 
-Two things that must line up for this to work, both non-obvious from Komodo's docs:
-- **`run_directory` + `file_paths` must put the run directory, the compose file, and the
-  written `.env` all in the same folder.** `file_paths` are relative to `run_directory`
-  (default: repo root); the written `.env`'s path (`env_file_path`, default `.env`) is
-  *also* relative to `run_directory` — but a plain `env_file: ./.env` in the compose file
-  resolves relative to the compose file's own directory, not `run_directory`. Set
-  `run_directory = "<service>"` and `file_paths = ["docker-compose.yml"]` (not
-  `["<service>/docker-compose.yml"]` from the repo root, the convention every other Stack
-  without this pattern still uses) so all three coincide.
-- **Config-driven changes to a Stack (`run_directory`, `file_paths`, `environment`) need the
-  `ResourceSync` to run** (Execute Sync in the Komodo UI, or its own `/sync` webhook — see
-  "Renovate → Komodo flow" above for why that's a different webhook than the Stack's own
-  `/deploy`). Hitting `/deploy` alone redeploys with whatever Stack config Komodo already had
-  saved, silently ignoring newer `komodo/stacks/<name>.toml` content until a sync catches up.
-
-A missing or unresolved `[[VARIABLE_NAME]]` (Variable never created in Komodo) doesn't fail
-loudly at the Komodo level — it gets passed through as the literal placeholder text, and
-whether that's caught depends entirely on the app. n8n's `N8N_INSTANCE_OWNER_PASSWORD_HASH`
-is a case that crash-loops the container on every boot with a clear error
-(`... is not a valid bcrypt hash`) — confirmed in production on this exact deployment. Others
-may fail more silently (e.g. an app just treating the placeholder as a literal password).
-Always verify Variables actually exist in Komodo before the first deploy of a Stack using
-this pattern, don't assume the sync/deploy will surface a missing one for you.
-
-**A secret value containing a literal `$` (bcrypt hashes are the classic case — `$2b$12$...`)
-gets silently mangled otherwise.** Docker Compose's `env_file:` values go through the same
-`${...}`/`$VAR` interpolation as everywhere else in a compose file; an unescaped `$` is treated
-as an attempted variable reference and gets dropped if unresolved — confirmed in production: a
-bcrypt hash arrived at the container missing a `$` and truncated, and n8n rejected it as
-malformed with no indication of why. Fix at the template level, not by asking whoever enters
-the Variable to hand-escape it: wrap that line in single quotes in the `environment` block,
-e.g. `SOME_HASH='[[SOME_HASH]]'` — see `N8N_INSTANCE_OWNER_PASSWORD_HASH` in
-`komodo/stacks/n8n.toml`. The Komodo Variable itself still holds the raw, unescaped value.
+Gotchas:
+- `env_file_path` (the written `.env`) is relative to `run_directory`, but a plain
+  `env_file: ./.env` in the compose file resolves relative to the compose file's own
+  directory. Set `run_directory = "<service>"` + `file_paths = ["docker-compose.yml"]` so
+  they land in the same place (not the repo-root `["<service>/docker-compose.yml"]` other
+  Stacks use).
+- Changes to `run_directory`/`file_paths`/`environment` need the `ResourceSync` to run
+  (Execute Sync, or its own `/sync` webhook) — `/deploy` alone reuses whatever Stack config
+  Komodo already had saved and silently ignores newer `komodo/stacks/<name>.toml` content.
+- A missing/unresolved `[[VAR]]` passes through as literal placeholder text; whether that's
+  caught depends on the app (n8n crash-loops on an invalid `N8N_INSTANCE_OWNER_PASSWORD_HASH`,
+  others may fail silently) — verify Variables exist in Komodo before the first deploy.
+- A secret containing a literal `$` (bcrypt hashes: `$2b$12$...`) gets mangled: `env_file:`
+  values go through the same `$`-interpolation as the rest of a compose file, and an
+  unresolved `$VAR` reference gets dropped. Wrap the line in single quotes in the
+  `environment` block (`SOME_HASH='[[SOME_HASH]]'`) — see `N8N_INSTANCE_OWNER_PASSWORD_HASH`
+  in `komodo/stacks/n8n.toml`.
 
 ## Service reference
 

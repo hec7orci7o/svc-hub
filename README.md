@@ -32,17 +32,10 @@ already-published image and Komodo deploys it straight from `docker-compose.yml`
 5. **Deploy `cloudflared`**: create the tunnel in the Cloudflare Zero Trust dashboard, fill in
    `cloudflared/.env`, `docker compose up -d` on `lab53`, then register its Stack's `/deploy`
    webhook in GitHub.
-6. **Deploy `n8n`** the same way on `lab56` (see `n8n/.env.example`), and register its webhook.
-7. **Deploy `cups`** the same way, also on `lab56` (see `cups/.env.example`), and register its
-   webhook.
-8. **Deploy `odoo`** the same way on `lab55` (see `odoo/.env.example`), and register its
-   webhook.
-9. **Deploy `trek`** the same way on `lab54` (see `trek/.env.example`), and register its
-   webhook.
-10. **Deploy `scanopy`** the same way on `lab57` (see `scanopy/.env.example`), and register
-    its webhook.
-11. **Deploy `sysreptor`** and **`bloodhound-ce`** the same way, both on `lab58` (see their
-    `.env.example` files), and register their webhooks.
+6. **Deploy the rest of the services** the same way (`.env.example` → `.env` → fill in →
+   `docker compose up -d` → register the Stack's `/deploy` webhook): `n8n`/`cups` on `lab56`,
+   `odoo` on `lab55`, `trek` on `lab54`, `scanopy` on `lab57`, `sysreptor`/`bloodhound-ce` on
+   `lab58`.
 
 Full architecture, conventions, and the Renovate/webhook mechanics are in `CLAUDE.md`.
 

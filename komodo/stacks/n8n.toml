@@ -19,25 +19,21 @@ branch = "main"
 run_directory = "n8n"
 file_paths = ["docker-compose.yml"]
 
-# N8N_ENCRYPTION_KEY is never hardcoded here: [[N8N_ENCRYPTION_KEY]] interpolates from a
-# Komodo Variable (Settings > Variables, marked "secret") at deploy time. Komodo writes
-# the resolved content to n8n/.env before `docker compose up -d`, which env_file: ./.env
-# in n8n/docker-compose.yml then reads — no manual .env needed on lab56 for this service.
-# Generate once with `openssl rand -hex 32` and never change it afterward — changing it
+# Secrets/gotchas explained in CLAUDE.md's "Secrets via Komodo Variables" section.
+# N8N_ENCRYPTION_KEY: generate once with `openssl rand -hex 32`, never change it after —
 # breaks decryption of already-saved credentials.
 environment = """
 GENERIC_TIMEZONE=Europe/Madrid
 TZ=Europe/Madrid
 
-# Real public host/webhook URL (already live via cloudflared at this domain — this was
-# never LAN-only despite the original n8n/.env.example assumption). PROTOCOL stays http:
-# cloudflared terminates TLS and forwards http internally, same as the pre-existing setup.
+# Public via cloudflared at this domain (not LAN-only). PROTOCOL stays http: cloudflared
+# terminates TLS and forwards http internally.
 N8N_HOST=n8n.hectortoral.com
 N8N_PORT=5678
 N8N_PROTOCOL=http
 WEBHOOK_URL=http://n8n.hectortoral.com/
-# Required alongside PROTOCOL=http behind a TLS-terminating proxy — without this, login
-# cookies get the Secure flag and the browser silently drops them over plain http.
+# Required alongside PROTOCOL=http behind a TLS-terminating proxy, or login cookies get the
+# Secure flag and the browser drops them.
 N8N_SECURE_COOKIE=false
 
 N8N_ENCRYPTION_KEY=[[N8N_ENCRYPTION_KEY]]
@@ -45,24 +41,16 @@ N8N_ENCRYPTION_KEY=[[N8N_ENCRYPTION_KEY]]
 N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
 N8N_RESTRICT_FILE_ACCESS_TO=/files
 
-# Carried over from the pre-existing deployment's .env so existing workflows don't break
-# silently under n8n v2's stricter defaults (Code nodes block env access and external
-# npm packages by default in v2 — this instance already relies on both being open).
+# n8n v2 blocks Code-node env access and external npm packages by default; this instance's
+# workflows rely on both being open.
 N8N_BLOCK_ENV_ACCESS_IN_NODE=false
 NODE_FUNCTION_ALLOW_EXTERNAL=cheerio
 
 NODE_ENV=production
 
-# PASSWORD_HASH must be a bcrypt hash, NOT a plaintext password — generate with e.g.
+# PASSWORD_HASH: bcrypt hash, not a plaintext password — generate with e.g.
 #   docker run --rm httpd:alpine htpasswd -bnBC 10 "" 'your-password' | cut -d: -f2
-# n8n rejects startup entirely (crash-loop) if this isn't a valid bcrypt hash — an unset
-# or unresolved [[...]] placeholder Variable crashes it just as hard as a malformed one.
-# Single-quoted: a bcrypt hash's own literal `$` characters (`$2b$12$...`) otherwise get
-# eaten by Docker Compose's env_file interpolation (it treats `$` the same everywhere,
-# not just in the compose YAML — confirmed in production: `$2b$12$Lzh3...` arrived at the
-# container as `$2b$12/Lzh3...`, missing the `$`, and n8n rejected it as malformed).
-# Quoting here means the Komodo Variable itself can hold the raw hash with no manual
-# escaping needed.
+# Single-quoted so the Komodo Variable can hold the raw hash unescaped (see CLAUDE.md for why).
 N8N_INSTANCE_OWNER_MANAGED_BY_ENV=true
 N8N_INSTANCE_OWNER_EMAIL=[[N8N_INSTANCE_OWNER_EMAIL]]
 N8N_INSTANCE_OWNER_FIRST_NAME=[[N8N_INSTANCE_OWNER_FIRST_NAME]]
