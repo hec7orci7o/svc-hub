@@ -14,4 +14,9 @@ server = "lab53"
 git_provider = "github.com"
 repo = "hec7orci7o/svc-hub"
 branch = "main"
-file_paths = ["cloudflared/docker-compose.yml"]
+run_directory = "cloudflared"
+file_paths = ["docker-compose.yml"]
+
+environment = """
+TUNNEL_TOKEN=[[CLOUDFLARED_TUNNEL_TOKEN]]
+"""

@@ -14,4 +14,11 @@ server = "lab55"
 git_provider = "github.com"
 repo = "hec7orci7o/svc-hub"
 branch = "main"
-file_paths = ["odoo/docker-compose.yml"]
+run_directory = "odoo"
+file_paths = ["docker-compose.yml"]
+
+environment = """
+POSTGRES_DB=postgres
+POSTGRES_USER=odoo
+POSTGRES_PASSWORD=[[ODOO_POSTGRES_PASSWORD]]
+"""

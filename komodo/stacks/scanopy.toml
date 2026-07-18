@@ -14,4 +14,11 @@ server = "lab57"
 git_provider = "github.com"
 repo = "hec7orci7o/svc-hub"
 branch = "main"
-file_paths = ["scanopy/docker-compose.yml"]
+run_directory = "scanopy"
+file_paths = ["docker-compose.yml"]
+
+environment = """
+SCANOPY_LOG_LEVEL=info
+POSTGRES_PASSWORD=[[SCANOPY_POSTGRES_PASSWORD]]
+SCANOPY_PUBLIC_URL=http://lab57.local:60072
+"""

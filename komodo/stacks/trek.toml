@@ -14,4 +14,17 @@ server = "lab54"
 git_provider = "github.com"
 repo = "hec7orci7o/svc-hub"
 branch = "main"
-file_paths = ["trek/docker-compose.yml"]
+run_directory = "trek"
+file_paths = ["docker-compose.yml"]
+
+environment = """
+NODE_ENV=production
+PORT=3000
+ENCRYPTION_KEY=[[TREK_ENCRYPTION_KEY]]
+TZ=Europe/Madrid
+LOG_LEVEL=info
+ALLOWED_ORIGINS=
+APP_URL=http://lab54.local:3000
+ADMIN_EMAIL=
+ADMIN_PASSWORD=
+"""

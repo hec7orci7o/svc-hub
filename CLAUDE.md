@@ -179,14 +179,14 @@ any hardware/version-pin quirks live as comments in that service's own
   `komodo/stacks/n8n.toml` and `komodo/stacks/cups.toml` interpolate (see "Secrets via Komodo
   Variables" above) before the first deploy of either Stack.
 - Configure the GitHub webhooks toward the `n8n` and `cups` Stacks' `/deploy` in Komodo.
-- On `lab55`: copy `odoo/.env.example` to `.env`, set a real `POSTGRES_PASSWORD`,
-  `mkdir -p addons config`, and `docker compose up -d`.
+- On `lab55`: `mkdir -p odoo/addons odoo/config`. In Komodo, create `ODOO_POSTGRES_PASSWORD`
+  ("secret") — interpolated via `komodo/stacks/odoo.toml`.
 - Configure the GitHub webhook toward the `odoo` Stack's `/deploy` in Komodo.
-- On `lab54`: copy `trek/.env.example` to `.env`, generate `ENCRYPTION_KEY`,
-  `mkdir -p data uploads`, and `docker compose up -d`.
+- On `lab54`: `mkdir -p trek/data trek/uploads`. In Komodo, create `TREK_ENCRYPTION_KEY`
+  ("secret") — interpolated via `komodo/stacks/trek.toml`.
 - Configure the GitHub webhook toward the `trek` Stack's `/deploy` in Komodo.
-- On `lab57`: copy `scanopy/.env.example` to `.env`, set a real `POSTGRES_PASSWORD`,
-  `mkdir -p data`, and `docker compose up -d`.
+- On `lab57`: `mkdir -p scanopy/data`. In Komodo, create `SCANOPY_POSTGRES_PASSWORD`
+  ("secret") — interpolated via `komodo/stacks/scanopy.toml`.
 - Configure the GitHub webhook toward the `scanopy` Stack's `/deploy` in Komodo.
 - In Komodo (Settings > Variables), create `SYSREPTOR_POSTGRES_PASSWORD`,
   `SYSREPTOR_REDIS_PASSWORD`, `SYSREPTOR_SECRET_KEY` (all "secret") — interpolated into the
@@ -201,6 +201,6 @@ any hardware/version-pin quirks live as comments in that service's own
   from `docker compose logs bloodhound` after first deploy.
 - Configure the GitHub webhook toward the `bloodhound-ce` Stack's `/deploy` in Komodo.
 - `cloudflared` is intentionally on hold — see the note in `cloudflared/docker-compose.yml`.
-  When ready to migrate: copy the real `TUNNEL_TOKEN` from the manual container into
-  `cloudflared/.env`, `docker compose up -d` on `lab53`, retire the manual container, then
-  configure the GitHub webhook toward the `cloudflared` Stack's `/deploy` in Komodo.
+  When ready to migrate: create `CLOUDFLARED_TUNNEL_TOKEN` in Komodo (the real token from the
+  manual container), retire the manual container, then configure the GitHub webhook toward
+  the `cloudflared` Stack's `/deploy` in Komodo.
