@@ -188,16 +188,17 @@ any hardware/version-pin quirks live as comments in that service's own
 - On `lab57`: copy `scanopy/.env.example` to `.env`, set a real `POSTGRES_PASSWORD`,
   `mkdir -p data`, and `docker compose up -d`.
 - Configure the GitHub webhook toward the `scanopy` Stack's `/deploy` in Komodo.
-- On `lab58`: copy `sysreptor/.env.example` to `.env`, set real `POSTGRES_PASSWORD`,
-  `REDIS_PASSWORD`, `SECRET_KEY`, and `ENCRYPTION_KEYS`/`DEFAULT_ENCRYPTION_KEY_ID`, then
-  `docker compose up -d`.
+- In Komodo (Settings > Variables), create `SYSREPTOR_POSTGRES_PASSWORD`,
+  `SYSREPTOR_REDIS_PASSWORD`, `SYSREPTOR_SECRET_KEY` (all "secret") — interpolated into the
+  `sysreptor` Stack's `environment` via `komodo/stacks/sysreptor.toml`.
 - Configure the GitHub webhook toward the `sysreptor` Stack's `/deploy` in Komodo.
 - Import [HTB's report templates](https://github.com/Syslifters/HackTheBox-Reporting) — run
   from `sysreptor/` on lab58:
   `curl -s "https://docs.sysreptor.com/assets/htb-designs.tar.gz" | docker compose exec --no-TTY app python3 manage.py importdemodata --type=design`
-- Also on `lab58`: copy `bloodhound-ce/.env.example` to `.env`, set real `POSTGRES_PASSWORD`
-  and `NEO4J_SECRET`, then `docker compose up -d`. Grab the randomized admin password from
-  `docker compose logs bloodhound`.
+- In Komodo (Settings > Variables), create `BLOODHOUND_POSTGRES_PASSWORD` and
+  `BLOODHOUND_NEO4J_SECRET` (both "secret") — interpolated into the `bloodhound-ce` Stack's
+  `environment` via `komodo/stacks/bloodhound-ce.toml`. Grab the randomized admin password
+  from `docker compose logs bloodhound` after first deploy.
 - Configure the GitHub webhook toward the `bloodhound-ce` Stack's `/deploy` in Komodo.
 - `cloudflared` is intentionally on hold — see the note in `cloudflared/docker-compose.yml`.
   When ready to migrate: copy the real `TUNNEL_TOKEN` from the manual container into

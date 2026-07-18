@@ -14,4 +14,14 @@ server = "lab58"
 git_provider = "github.com"
 repo = "hec7orci7o/svc-hub"
 branch = "main"
-file_paths = ["sysreptor/docker-compose.yml"]
+run_directory = "sysreptor"
+file_paths = ["docker-compose.yml"]
+
+environment = """
+POSTGRES_USER=reportcreator
+POSTGRES_DB=reportcreator
+POSTGRES_PASSWORD=[[SYSREPTOR_POSTGRES_PASSWORD]]
+REDIS_PASSWORD=[[SYSREPTOR_REDIS_PASSWORD]]
+SECRET_KEY=[[SYSREPTOR_SECRET_KEY]]
+DEBUG=off
+"""

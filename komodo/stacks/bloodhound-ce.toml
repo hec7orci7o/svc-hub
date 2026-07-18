@@ -14,4 +14,13 @@ server = "lab58"
 git_provider = "github.com"
 repo = "hec7orci7o/svc-hub"
 branch = "main"
-file_paths = ["bloodhound-ce/docker-compose.yml"]
+run_directory = "bloodhound-ce"
+file_paths = ["docker-compose.yml"]
+
+environment = """
+POSTGRES_USER=bloodhound
+POSTGRES_DB=bloodhound
+POSTGRES_PASSWORD=[[BLOODHOUND_POSTGRES_PASSWORD]]
+NEO4J_USER=neo4j
+NEO4J_SECRET=[[BLOODHOUND_NEO4J_SECRET]]
+"""
