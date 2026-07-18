@@ -144,11 +144,12 @@ Gotchas:
   in `komodo/stacks/n8n.toml`.
 - This pattern only covers env vars. A secret that only has a config-file form (Odoo's
   `admin_passwd`, for example — the official image has no env-var for it) can't go through
-  Komodo Variables. `config_files` (a separate Stack field) tracks/diffs an existing file and
-  makes it editable in the Komodo UI, but — unlike `environment` — doesn't template or write
-  it from a Variable; the file still has to be created once, with the real secret, either
-  through that UI editor or by hand on the host. See `odoo/odoo.conf.example` and
-  `komodo/stacks/odoo.toml`.
+  Komodo Variables. `config_files` (a separate Stack field) can track an existing file and
+  make it editable in the Komodo UI, but — unlike `environment` — doesn't write/template it
+  from a Variable, and registering one that doesn't already exist on the host **blocks the
+  Stack's deploy entirely** (fails Validate Files). If nothing can populate the file
+  automatically, prefer skipping it and living with the app's own defaults over adding a step
+  that breaks automatic deploy — see `odoo/docker-compose.yml`.
 
 ## Service reference
 
@@ -161,7 +162,7 @@ any hardware/version-pin quirks live as comments in that service's own
 | Komodo Core | `lab53` | `komodo/core/`; see `komodo/CONNECT-SERVERS.md` to connect the rest of the fleet |
 | n8n | `lab56` | `n8n/`; secrets via Komodo Variables (see above) |
 | cups | `lab56` | `cups/`; secrets via Komodo Variables (see above); `network_mode: host` + `privileged: true` |
-| Odoo | `lab57` | `odoo/`; own bridge network isolates Postgres from the LAN; `admin_passwd`/workers/memory limits set via `odoo.conf.example` (copied to `config/odoo.conf` by hand — the official image has no env-var equivalent, so this one file falls outside the Komodo Variables pattern) |
+| Odoo | `lab57` | `odoo/`; own bridge network isolates Postgres from the LAN; no custom `odoo.conf` (see the note in `odoo/docker-compose.yml`) — runs on Odoo's own defaults, change the master password via `/web/database/manager` after first boot |
 | TREK | `lab54` | `trek/` |
 | scanopy | `lab53` | `scanopy/`; shares the board with Komodo Core/cloudflared; `network_mode: host` + `privileged: true` on `daemon`; LAN-only by decision (maps real network topology) |
 | SysReptor | `lab58` | `sysreptor/`; shares the board with BloodHound CE |
@@ -186,10 +187,9 @@ any hardware/version-pin quirks live as comments in that service's own
   `komodo/stacks/n8n.toml` and `komodo/stacks/cups.toml` interpolate (see "Secrets via Komodo
   Variables" above) before the first deploy of either Stack.
 - Configure the GitHub webhooks toward the `n8n` and `cups` Stacks' `/deploy` in Komodo.
-- On `lab57`: `mkdir -p odoo/addons`. Create `config/odoo.conf` with a real `admin_passwd`
-  (content from `odoo/odoo.conf.example`) via the Komodo UI's Stack > Config Files editor,
-  not by hand on the host. In Komodo, create `ODOO_POSTGRES_PASSWORD` ("secret") —
-  interpolated via `komodo/stacks/odoo.toml`.
+- On `lab57`: `mkdir -p odoo/addons`. In Komodo, create `ODOO_POSTGRES_PASSWORD` ("secret") —
+  interpolated via `komodo/stacks/odoo.toml`. After first boot, set a real master password at
+  `http://lab57.local:8069/web/database/manager` (default login is `admin`).
 - Configure the GitHub webhook toward the `odoo` Stack's `/deploy` in Komodo.
 - On `lab54`: `mkdir -p trek/data trek/uploads`. In Komodo, create `TREK_ENCRYPTION_KEY`
   ("secret") — interpolated via `komodo/stacks/trek.toml`.

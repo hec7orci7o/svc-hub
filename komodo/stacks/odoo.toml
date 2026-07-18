@@ -17,16 +17,10 @@ branch = "main"
 run_directory = "odoo"
 file_paths = ["docker-compose.yml"]
 
-# Tracks config/odoo.conf so it shows up editable in the Komodo UI (Stack > Config Files)
-# and a change to it triggers a redeploy. This does NOT write/template the file the way
-# `environment` below does for .env — config/odoo.conf must be created once (via that UI
-# editor, or by hand on lab57) with a real admin_passwd; see odoo/odoo.conf.example and
-# CLAUDE.md's "Secrets via Komodo Variables" for why this one file falls outside that
-# pattern (the official Odoo image has no env-var equivalent for admin_passwd).
-config_files = [
-  { path = "config/odoo.conf", requires = "Redeploy" }
-]
-
+# No config_files/custom odoo.conf, deliberately — see the note in docker-compose.yml.
+# Registering a config file Komodo can't itself create/write blocks the Stack's Validate
+# Files step entirely if it doesn't already exist on the host, which defeats automatic
+# deploy. This Stack deploys fully from git with no manual file-creation step.
 environment = """
 POSTGRES_DB=postgres
 POSTGRES_USER=odoo

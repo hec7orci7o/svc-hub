@@ -35,8 +35,8 @@ already-published image and Komodo deploys it straight from `docker-compose.yml`
 6. **Deploy the rest of the services** the same way (`.env.example` → `.env` → fill in →
    `docker compose up -d` → register the Stack's `/deploy` webhook): `n8n`/`cups` on `lab56`,
    `odoo` on `lab57`, `trek` on `lab54`, `scanopy` on `lab53`, `sysreptor`/`bloodhound-ce` on
-   `lab58`. `odoo` also needs `odoo/odoo.conf.example` copied to `odoo/config/odoo.conf`
-   with a real `admin_passwd` — see `CLAUDE.md`.
+   `lab58`. `odoo` runs on its own default config — set a real master password at
+   `/web/database/manager` after first boot (see `CLAUDE.md`).
 
 Full architecture, conventions, and the Renovate/webhook mechanics are in `CLAUDE.md`.
 

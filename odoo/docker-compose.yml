@@ -1,9 +1,17 @@
 # Odoo (official image) + Postgres on lab57.
 # Deploy-only, same pattern as every other service in this hub — no build of our own.
-# Copy .env.example to .env and odoo.conf.example to config/odoo.conf, fill both in, before:
-#   mkdir -p addons config   (create by hand to get the right owner/permissions)
+# Copy .env.example to .env and fill it in before:
+#   mkdir -p addons   (create by hand to get the right owner/permissions)
 #   docker compose up -d
 # (docker compose loads ./.env automatically to interpolate ${VARS} below)
+#
+# No custom odoo.conf: Komodo can only auto-write .env-style files (via `environment` in
+# komodo/stacks/odoo.toml), not arbitrary config files — admin_passwd/workers/memory limits
+# have no env-var equivalent in the official image, so hand-managing a config file here would
+# mean this Stack can never deploy fully automatically. Runs on Odoo's own built-in defaults
+# instead (admin_passwd defaults to "admin", workers=0, list_db unset/exposed) — change the
+# master password via the web UI (/web/database/manager) after first boot. See CLAUDE.md for
+# the trade-off and how to reintroduce a config file later if that stops being acceptable.
 
 services:
   db:
@@ -59,7 +67,6 @@ services:
     volumes:
       - odoo_data:/var/lib/odoo
       - ./addons:/mnt/extra-addons
-      - ./config:/etc/odoo
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8069/web/health || exit 1"]
       interval: 30s
