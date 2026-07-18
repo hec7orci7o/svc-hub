@@ -41,15 +41,10 @@ services:
         max-file: "3"
     # No HEALTHCHECK: upstream removed theirs in v0.107.34 (caused restart loops), no
     # replacement exists.
+    # No cap_drop: needs NET_BIND_SERVICE + DAC_OVERRIDE at startup, same as upstream's own
+    # docker run example.
     security_opt:
       - no-new-privileges:true
-    cap_drop:
-      - ALL
-    # NET_BIND_SERVICE: the binary needs this to bind port 53 (privileged, <1024) without
-    # running as root — cap_drop: ALL alone makes the exec itself fail ("operation not
-    # permitted"), confirmed in production.
-    cap_add:
-      - NET_BIND_SERVICE
 
 volumes:
   adguard_work:
