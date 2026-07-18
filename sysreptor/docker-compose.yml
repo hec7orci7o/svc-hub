@@ -1,7 +1,5 @@
-# SysReptor — pentest reporting platform (syslifters/sysreptor image). Deploy-only.
-# Upstream's install.sh adds `build: ../../` next to `image:`; omitted here on purpose —
-# `image:` alone pulls the same tag they publish.
-# Copy .env.example to .env, then docker compose up -d.
+# Upstream's install.sh adds `build: ../../` next to `image:` — omitted on purpose,
+# `image:` alone pulls the same published tag.
 
 services:
   db:
@@ -24,7 +22,6 @@ services:
       options:
         max-size: 10m
         max-file: "3"
-    # No cap_drop: entrypoint needs root to init the data dir, same as Mongo's.
     security_opt:
       - no-new-privileges:true
 
@@ -45,7 +42,6 @@ services:
       - ALL
 
   app:
-    # Pinned literal tag (not an env var) so Renovate can see and bump it directly.
     image: syslifters/sysreptor:2026.50
     restart: unless-stopped
     init: true

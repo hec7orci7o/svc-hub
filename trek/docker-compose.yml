@@ -1,15 +1,12 @@
-# TREK — collaborative travel planner (mauriceboe/trek image). Deploy-only, no build.
-# Copy .env.example to .env, mkdir -p data uploads, then docker compose up -d.
+# mkdir -p data uploads before first deploy.
 
 services:
   trek:
-    # Pinned literal tag (not an env var) so Renovate can see and bump it directly.
     image: mauriceboe/trek:3.2.1
     restart: unless-stopped
     read_only: true
-    # cap_drop: ALL is the hub baseline; CHOWN/SETUID/SETGID are re-added because the
-    # entrypoint needs them to fix ownership of the bind-mounted data/uploads dirs at
-    # startup — this is upstream's own documented production config, not a hub deviation.
+    # CHOWN/SETUID/SETGID: entrypoint needs these to fix bind-mount ownership at startup —
+    # upstream's own documented production config, not a hub deviation.
     security_opt:
       - no-new-privileges:true
     cap_drop:

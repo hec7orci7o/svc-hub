@@ -1,10 +1,5 @@
-# Server definitions (schema: https://komo.do/docs/automate/sync-resources).
-# Addresses use <name>.local (mDNS/Avahi) instead of raw LAN IPs, so this public repo
-# never publishes real network details. Which services run where: grep `server =` across
-# komodo/stacks/*.toml, not here.
-#
-# "lab53" is auto-created on Core's first boot (KOMODO_FIRST_SERVER_NAME in .env) — this
-# block must stay in sync with that so ResourceSync doesn't detect a diff.
+# "lab53" is auto-created on Core's first boot (KOMODO_FIRST_SERVER_NAME in .env) — keep
+# this block in sync with that so ResourceSync doesn't detect a diff.
 
 [[server]]
 name = "lab53"

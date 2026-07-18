@@ -1,9 +1,7 @@
-# n8n (official docker.n8n.io/n8nio/n8n image). Deploy-only, no build of our own.
-# Copy .env.example to .env, mkdir -p local-files, then docker compose up -d.
+# mkdir -p local-files before first deploy.
 
 services:
   n8n:
-    # Pinned literal tag (not an env var) so Renovate can see and bump it directly.
     image: docker.n8n.io/n8nio/n8n:2.29.8
     restart: unless-stopped
     ports:
@@ -19,9 +17,7 @@ services:
       timeout: 5s
       retries: 3
     volumes:
-      # SQLite (default, enough for a single instance) + encryption key.
       - n8n_data:/home/node/.n8n
-      # Directory for the "Read/Write Files from Disk" node (N8N_RESTRICT_FILE_ACCESS_TO=/files).
       - ./local-files:/files
 
 volumes:

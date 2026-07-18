@@ -2,7 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
   "timezone": "Europe/Madrid",
-  "schedule": ["before 6am on monday"],
+  "schedule": ["before 6am every day"],
   "packageRules": [
     {
       "matchManagers": ["docker-compose"],

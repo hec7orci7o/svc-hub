@@ -1,6 +1,3 @@
-# Schema: https://komo.do/docs/automate/sync-resources
-# Deploy-only: redeploy triggers via this Stack's /deploy webhook, no CI involved.
-
 [[stack]]
 name = "bloodhound-ce"
 description = "BloodHound CE — Active Directory attack path analysis (specterops/bloodhound image)"

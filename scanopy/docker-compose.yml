@@ -1,13 +1,12 @@
-# scanopy — network topology documentation (ghcr.io/scanopy/scanopy images). Deploy-only.
 # AGPL-3.0 for self-hosted use (see upstream repo for the commercial alternative).
-# Copy .env.example to .env, mkdir -p data, then docker compose up -d.
+# mkdir -p data before first deploy.
 
 services:
   daemon:
-    # Pinned literal tag. Pre-1.0 (0.x): minor bumps excluded from automerge in renovate.json.
+    # Pre-1.0 (0.x): minor bumps excluded from automerge in renovate.json.
     image: ghcr.io/scanopy/scanopy/daemon:v0.17.4
     restart: unless-stopped
-    # Host networking: LAN topology discovery needs the real network segment, not a bridge.
+    # LAN topology discovery needs the real network segment, not a bridge.
     network_mode: host
     privileged: true
     env_file: ./.env
@@ -30,7 +29,6 @@ services:
       - no-new-privileges:true
 
   postgres:
-    # Pinned literal tag (not an env var) so Renovate can see and bump it directly.
     image: postgres:17-alpine
     restart: unless-stopped
     environment:
@@ -51,12 +49,11 @@ services:
       options:
         max-size: 10m
         max-file: "3"
-    # No cap_drop: entrypoint needs root to init the data dir, same as Mongo's.
     security_opt:
       - no-new-privileges:true
 
   server:
-    # Pinned literal tag. Pre-1.0 (0.x): see the note on the daemon image above.
+    # Pre-1.0 (0.x): see the note on the daemon image above.
     image: ghcr.io/scanopy/scanopy/server:v0.17.4
     restart: unless-stopped
     ports:

@@ -1,7 +1,3 @@
-# Komodo Core v2 — Core + Mongo + local Periphery, based on
-# https://github.com/moghtech/komodo/blob/main/compose/mongo.compose.yaml
-# Create .env from .env.example, then docker compose up -d.
-
 services:
   mongo:
     # ponytail: Mongo 5.0+ needs ARMv8.2-A; Pi 4 (Cortex-A72) is only ARMv8.0-A, so :latest
@@ -9,10 +5,9 @@ services:
     # Upgrade path: a Pi 5 (ARMv8.2-A) or non-Pi host.
     image: mongo:4.4.18
     labels:
-      komodo.skip: # prevents Komodo from stopping this container via StopAllContainers
+      komodo.skip:
     command: --quiet --wiredTigerCacheSizeGB 0.25
     restart: unless-stopped
-    # No cap_drop: entrypoint needs root (chown/setuid) to init the data dir.
     security_opt:
       - no-new-privileges:true
     volumes:
@@ -23,7 +18,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${KOMODO_DATABASE_PASSWORD}
 
   core:
-    # Pinned literal tag. Must stay in lockstep with periphery's tag below (matched pair).
+    # Must stay in lockstep with periphery's tag below (matched pair).
     image: ghcr.io/moghtech/komodo-core:2.2.0
     init: true
     restart: unless-stopped
@@ -41,19 +36,14 @@ services:
     volumes:
       - keys:/config/keys
       - ${COMPOSE_KOMODO_BACKUPS_PATH}:/backups
-      # - /path/to/syncs:/syncs
 
-  # Periphery for this host itself; for the rest of the fleet see ../CONNECT-SERVERS.md.
   periphery:
-    # Must stay in lockstep with core's tag above.
     image: ghcr.io/moghtech/komodo-periphery:2.2.0
     init: true
     restart: unless-stopped
     depends_on:
       - core
     env_file: ./.env
-    # No cap_drop: needs docker.sock/proc access — the whole point of Periphery, and
-    # already effectively root-on-host via the socket regardless of capabilities.
     security_opt:
       - no-new-privileges:true
     volumes:

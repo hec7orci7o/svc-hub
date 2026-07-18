@@ -52,8 +52,8 @@ without `--compatibility` (it's Swarm-only), so it'd look configured without app
 Every service gets `security_opt: [no-new-privileges:true]`. Add `cap_drop: [ALL]` too, unless
 the entrypoint needs root-level capabilities at startup (common in DB images that
 `chown`/`setuid` down to an unprivileged user) or it genuinely needs host-level access by
-design. Skipping `cap_drop` needs a one-line comment saying why — a silent skip reads as an
-oversight, not a decision.
+design. A comment is only worth adding when the specific capability needed isn't the obvious
+DB-image case — e.g. a one-off `NET_BIND_SERVICE` for binding a privileged port.
 
 ## Secrets via Komodo Variables
 

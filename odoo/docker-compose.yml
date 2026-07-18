@@ -1,14 +1,10 @@
-# Odoo (official image) + Postgres. Deploy-only, no build of our own.
-# Copy .env.example to .env, mkdir -p addons, then docker compose up -d.
-#
-# No odoo.conf: admin_passwd/workers/memory limits have no env-var equivalent, and Komodo
-# can't auto-write arbitrary config files — see CLAUDE.md. Runs on Odoo's own defaults
-# (admin_passwd="admin", workers=0); change the master password at /web/database/manager
-# after first boot.
+# mkdir -p addons before first deploy.
+# No odoo.conf: admin_passwd/workers/memory limits have no env-var equivalent and Komodo
+# can't auto-write arbitrary config files. Runs on Odoo's own defaults (admin_passwd=
+# "admin", workers=0) — change the master password at /web/database/manager after boot.
 
 services:
   db:
-    # Pinned literal tag (not an env var) so Renovate can see and bump it directly.
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
@@ -27,20 +23,17 @@ services:
     networks:
       - odoo_network
     shm_size: 512mb
-    # Tuned for 8GB — halve shared_buffers/effective_cache_size on a smaller board (no
-    # mem_limit caps this, see "No resource limits" in CLAUDE.md).
+    # Tuned for 8GB — halve shared_buffers/effective_cache_size on a smaller board.
     command: postgres -c shared_buffers=512MB -c effective_cache_size=2GB -c work_mem=16MB -c maintenance_work_mem=128MB -c max_connections=40 -c autovacuum=on
     logging:
       driver: json-file
       options:
         max-size: 10m
         max-file: "3"
-    # No cap_drop: entrypoint needs root to init the data dir, same as Mongo's.
     security_opt:
       - no-new-privileges:true
 
   odoo:
-    # Pinned literal tag (not an env var) so Renovate can see and bump it directly.
     image: odoo:19.0
     restart: unless-stopped
     depends_on:

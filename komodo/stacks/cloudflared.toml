@@ -1,6 +1,3 @@
-# Schema: https://komo.do/docs/automate/sync-resources
-# Deploy-only: redeploy triggers via this Stack's /deploy webhook, no CI involved.
-
 [[stack]]
 name = "cloudflared"
 description = "Cloudflare Tunnel (official cloudflare/cloudflared image) — the hub's only public ingress"

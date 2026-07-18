@@ -1,6 +1,3 @@
-# Schema: https://komo.do/docs/automate/sync-resources
-# Deploy-only: redeploy triggers via this Stack's /deploy webhook, no CI involved.
-
 [[stack]]
 name = "adguard"
 description = "AdGuard Home — network-wide DNS ad/tracker blocker (official adguard/adguardhome image)"

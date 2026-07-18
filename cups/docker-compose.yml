@@ -1,21 +1,12 @@
-# CUPS/AirPrint bridge (drpsychick/airprint-bridge image). Deploy-only, no build of our own.
-# Copy .env.example to .env, then docker compose up -d.
-
 services:
   cups:
-    # Pinned literal tag (not an env var) so Renovate can see and bump it directly.
-    # Tags on this image are dated (focal-YYYYMMDD), not semver, so Renovate's
-    # patch/minor automerge doesn't apply cleanly here — expect a PR for every new
-    # date and review each one instead of trusting automerge.
+    # Dated tag (focal-YYYYMMDD), not semver — Renovate opens a PR per date, review each.
     image: drpsychick/airprint-bridge:focal-20260706
     restart: unless-stopped
-    # host networking is required, not incidental: AirPrint/Bonjour discovery relies on
-    # mDNS broadcasts on the actual LAN segment, which don't traverse a bridge network.
+    # AirPrint/Bonjour mDNS broadcasts don't cross a bridge network.
     network_mode: host
-    # Full host access by design (same exception class as Periphery's docker.sock mount):
-    # needed for USB printer passthrough and Avahi/dbus integration with the host.
-    # no-new-privileges/cap_drop are omitted deliberately, not skipped by oversight —
-    # both are moot under privileged: true, which already grants every capability.
+    # privileged: true is required for USB passthrough + Avahi/dbus; no-new-privileges/
+    # cap_drop are moot under it, not an oversight.
     privileged: true
     env_file: ./.env
     logging:

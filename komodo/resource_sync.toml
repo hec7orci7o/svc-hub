@@ -1,9 +1,3 @@
-# BOOTSTRAP NOTE: the first time, this ResourceSync must be created manually in
-# the Komodo Core UI pointing at this repo (it can't self-create from a file it
-# isn't reading yet). From then on, changes to servers.toml and stacks/*.toml
-# are managed 100% via git.
-# Verify the exact mechanism at komo.do/docs/automate/sync-resources.
-
 [[resource_sync]]
 name = "svc-hub-sync"
 
