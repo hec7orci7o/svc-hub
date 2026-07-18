@@ -1,0 +1,18 @@
+# Schema confirmed at https://komo.do/docs/automate/sync-resources
+#
+# Deploy-only, like every service in this hub: redeploy is triggered by a GitHub
+# webhook pointed directly at this Stack's /deploy listener (copy the URL from
+# the Komodo UI, Stack Config > Webhooks). No build, no GitHub Actions workflow involved.
+
+[[stack]]
+name = "adguard"
+description = "AdGuard Home — network-wide DNS ad/tracker blocker (official adguard/adguardhome image)"
+tags = ["adguard", "dns"]
+
+[stack.config]
+server = "lab53"
+git_provider = "github.com"
+repo = "hec7orci7o/svc-hub"
+branch = "main"
+run_directory = "adguard"
+file_paths = ["docker-compose.yml"]

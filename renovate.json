@@ -28,6 +28,12 @@
       "matchPackageNames": ["neo4j"],
       "matchUpdateTypes": ["minor"],
       "automerge": false
+    },
+    {
+      "matchManagers": ["docker-compose"],
+      "matchPackageNames": ["adguard/adguardhome"],
+      "matchUpdateTypes": ["minor"],
+      "automerge": false
     }
   ]
 }

@@ -7,7 +7,7 @@ Raspberry Pi boards. See `README.md` for a getting-started cheatsheet.
 
 | Name | Role |
 |---|---|
-| `lab53` | Komodo Core + Periphery + cloudflared + scanopy |
+| `lab53` | Komodo Core + Periphery + cloudflared + scanopy + AdGuard Home |
 | `lab54` | Periphery — runs TREK |
 | `lab55` | Periphery — idle, nothing scheduled |
 | `lab56` | Periphery — runs n8n, cups |
@@ -110,8 +110,8 @@ docker compose -f <folder>/docker-compose.yml config   # validate syntax
 container to maintain. Covers any `docker-compose.yml` in the repo by default (see the
 coverage rule above for why tags must be pinned as literals). Automerge exceptions in
 `renovate.json`: Komodo majors (breaking changes need review), scanopy's daemon/server minors
-(pre-1.0, semver minors not guaranteed compatible), `bloodhound-ce`'s `neo4j` minors (pinned
-to the 4.4 line for BloodHound's graph schema).
+and AdGuard Home minors (both pre-1.0, semver minors not guaranteed compatible),
+`bloodhound-ce`'s `neo4j` minors (pinned to the 4.4 line for BloodHound's graph schema).
 
 **Manual step not yet done:** `platformAutomerge: true` needs "Allow auto-merge" enabled in
 GitHub repo settings (Settings > General > Pull Requests), or patch/minor PRs open but never
@@ -165,6 +165,7 @@ any hardware/version-pin quirks live as comments in that service's own
 | Odoo | `lab57` | `odoo/`; own bridge network isolates Postgres from the LAN; no custom `odoo.conf` (see the note in `odoo/docker-compose.yml`) — runs on Odoo's own defaults, change the master password via `/web/database/manager` after first boot |
 | TREK | `lab54` | `trek/` |
 | scanopy | `lab53` | `scanopy/`; shares the board with Komodo Core/cloudflared; `network_mode: host` + `privileged: true` on `daemon`; LAN-only by decision (maps real network topology) |
+| AdGuard Home | `lab53` | `adguard/`; shares the board with Komodo Core/cloudflared/scanopy; needs `systemd-resolved`'s stub listener disabled on lab53 first (see the note in `adguard/docker-compose.yml`) or it can't bind host port 53; no env vars/secrets at all — admin credentials set once via the setup wizard at `:3000` |
 | SysReptor | `lab58` | `sysreptor/`; shares the board with BloodHound CE |
 | BloodHound CE | `lab58` | `bloodhound-ce/`; shares the board with SysReptor |
 | cloudflared | `lab53` | `cloudflared/`; **not deployed yet on purpose** — see the note in `cloudflared/docker-compose.yml` |
@@ -197,6 +198,11 @@ any hardware/version-pin quirks live as comments in that service's own
 - On `lab53`: `mkdir -p scanopy/data`. In Komodo, create `SCANOPY_POSTGRES_PASSWORD`
   ("secret") — interpolated via `komodo/stacks/scanopy.toml`.
 - Configure the GitHub webhook toward the `scanopy` Stack's `/deploy` in Komodo.
+- Also on `lab53`: disable `systemd-resolved`'s stub listener (commands in
+  `adguard/docker-compose.yml`) before the first deploy of `adguard`, or it can't bind host
+  port 53. No Komodo Variables needed. After first boot, set the admin account at
+  `http://lab53.local:3000`.
+- Configure the GitHub webhook toward the `adguard` Stack's `/deploy` in Komodo.
 - In Komodo (Settings > Variables), create `SYSREPTOR_POSTGRES_PASSWORD`,
   `SYSREPTOR_REDIS_PASSWORD`, `SYSREPTOR_SECRET_KEY` (all "secret") — interpolated into the
   `sysreptor` Stack's `environment` via `komodo/stacks/sysreptor.toml`.
