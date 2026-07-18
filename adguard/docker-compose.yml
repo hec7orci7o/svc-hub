@@ -21,6 +21,9 @@ services:
       - "53:53/tcp"
       - "53:53/udp"
       - "3000:3000/tcp"
+      # Post-setup admin UI moves off :3000 to whatever port you pick in the wizard (80 by
+      # default) — publish it or the dashboard becomes unreachable once setup completes.
+      - "80:80/tcp"
       # DoH/DoT/DoQ — encrypted DNS for clients that prefer it (e.g. browsers with DoH on
       # by default). Published but inert until a TLS cert is set up in the AdGuard web UI
       # (Settings > Encryption) — no env-var/file-based way to do that automatically, same
