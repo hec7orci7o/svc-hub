@@ -1,6 +1,6 @@
-# Odoo (official image) + Postgres on lab55.
+# Odoo (official image) + Postgres on lab57.
 # Deploy-only, same pattern as every other service in this hub — no build of our own.
-# Copy .env.example to .env and fill it in before:
+# Copy .env.example to .env and odoo.conf.example to config/odoo.conf, fill both in, before:
 #   mkdir -p addons config   (create by hand to get the right owner/permissions)
 #   docker compose up -d
 # (docker compose loads ./.env automatically to interpolate ${VARS} below)
@@ -26,7 +26,7 @@ services:
     networks:
       - odoo_network
     shm_size: 512mb
-    # Tuned for lab55's 8GB. If this ever moves to a smaller board, halve
+    # Tuned for lab57's 8GB. If this ever moves to a smaller board, halve
     # shared_buffers/effective_cache_size first — this isn't capped by mem_limit
     # (see "No resource limits" in CLAUDE.md), so an oversized value here is what
     # would trigger the Pi's OOM killer, not a hard container ceiling.

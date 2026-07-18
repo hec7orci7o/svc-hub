@@ -13,7 +13,7 @@ already-published image and Komodo deploys it straight from `docker-compose.yml`
 | `cloudflared/` | Cloudflare Tunnel — the hub's only public ingress | `lab53` |
 | `n8n/` | n8n | `lab56` |
 | `cups/` | CUPS/AirPrint bridge | `lab56` |
-| `odoo/` | Odoo ERP + Postgres | `lab55` |
+| `odoo/` | Odoo ERP + Postgres | `lab57` |
 | `trek/` | TREK — collaborative travel planner | `lab54` |
 | `scanopy/` | scanopy — network topology documentation | `lab53` |
 | `sysreptor/` | SysReptor — pentest reporting platform | `lab58` |
@@ -34,8 +34,9 @@ already-published image and Komodo deploys it straight from `docker-compose.yml`
    webhook in GitHub.
 6. **Deploy the rest of the services** the same way (`.env.example` → `.env` → fill in →
    `docker compose up -d` → register the Stack's `/deploy` webhook): `n8n`/`cups` on `lab56`,
-   `odoo` on `lab55`, `trek` on `lab54`, `scanopy` on `lab53`, `sysreptor`/`bloodhound-ce` on
-   `lab58`.
+   `odoo` on `lab57`, `trek` on `lab54`, `scanopy` on `lab53`, `sysreptor`/`bloodhound-ce` on
+   `lab58`. `odoo` also needs `odoo/odoo.conf.example` copied to `odoo/config/odoo.conf`
+   with a real `admin_passwd` — see `CLAUDE.md`.
 
 Full architecture, conventions, and the Renovate/webhook mechanics are in `CLAUDE.md`.
 

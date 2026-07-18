@@ -1,0 +1,31 @@
+; Odoo production config for lab57. The official odoo image only reads HOST/PORT/USER/
+; PASSWORD from env vars (already set via Komodo, see komodo/stacks/odoo.toml) — everything
+; else below has no env-var equivalent and must live in this file. Copy to config/odoo.conf
+; (gitignored, NOT committed) and set a real admin_passwd before first boot; Komodo can't
+; write this one for you the way it writes .env (see CLAUDE.md's "Secrets via Komodo
+; Variables" for why that pattern only covers env vars, not arbitrary config files).
+
+[options]
+addons_path = /mnt/extra-addons
+data_dir = /var/lib/odoo
+
+; CRITICAL: protects /web/database/manager (create/drop/backup/restore any database on this
+; instance). Generate with `openssl rand -base64 32`.
+admin_passwd = changeme
+
+; Hides the database selector/manager UI — single-tenant instance, no reason to expose it.
+list_db = False
+
+; Tuned for light use (2-3 concurrent users) on lab57's shared 8GB (see the Postgres tuning
+; comment in docker-compose.yml). The official image's own defaults (2GB soft / 2.5GB hard
+; per worker) assume real production traffic and would leave too little headroom here.
+workers = 2
+max_cron_threads = 1
+limit_memory_soft = 536870912
+limit_memory_hard = 671088640
+limit_time_cpu = 600
+limit_time_real = 1200
+
+; Flip to True if this ever sits behind cloudflared/a reverse proxy — without it, Odoo
+; can't tell requests are HTTPS or see the real client IP.
+proxy_mode = False

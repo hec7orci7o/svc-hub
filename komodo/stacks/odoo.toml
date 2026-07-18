@@ -10,7 +10,7 @@ description = "Odoo ERP + Postgres (official images)"
 tags = ["odoo"]
 
 [stack.config]
-server = "lab55"
+server = "lab57"
 git_provider = "github.com"
 repo = "hec7orci7o/svc-hub"
 branch = "main"

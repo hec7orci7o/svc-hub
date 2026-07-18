@@ -9,9 +9,9 @@ Raspberry Pi boards. See `README.md` for a getting-started cheatsheet.
 |---|---|
 | `lab53` | Komodo Core + Periphery + cloudflared + scanopy |
 | `lab54` | Periphery — runs TREK |
-| `lab55` | Periphery — runs Odoo |
+| `lab55` | Periphery — idle, nothing scheduled |
 | `lab56` | Periphery — runs n8n, cups |
-| `lab57` | Periphery — idle, nothing scheduled |
+| `lab57` | Periphery — runs Odoo |
 | `lab58` | Periphery — runs sysreptor, bloodhound-ce |
 
 Declared as code in `komodo/servers.toml`, addressed by `<name>.local` (mDNS/Avahi, on by
@@ -142,6 +142,10 @@ Gotchas:
   unresolved `$VAR` reference gets dropped. Wrap the line in single quotes in the
   `environment` block (`SOME_HASH='[[SOME_HASH]]'`) — see `N8N_INSTANCE_OWNER_PASSWORD_HASH`
   in `komodo/stacks/n8n.toml`.
+- This pattern only covers env vars. A secret that only has a config-file form (Odoo's
+  `admin_passwd`, for example — the official image has no env-var for it) can't go through
+  Komodo Variables; it stays a manually-edited, gitignored file on the host — see
+  `odoo/odoo.conf.example`.
 
 ## Service reference
 
@@ -154,7 +158,7 @@ any hardware/version-pin quirks live as comments in that service's own
 | Komodo Core | `lab53` | `komodo/core/`; see `komodo/CONNECT-SERVERS.md` to connect the rest of the fleet |
 | n8n | `lab56` | `n8n/`; secrets via Komodo Variables (see above) |
 | cups | `lab56` | `cups/`; secrets via Komodo Variables (see above); `network_mode: host` + `privileged: true` |
-| Odoo | `lab55` | `odoo/`; own bridge network isolates Postgres from the LAN |
+| Odoo | `lab57` | `odoo/`; own bridge network isolates Postgres from the LAN; `admin_passwd`/workers/memory limits set via `odoo.conf.example` (copied to `config/odoo.conf` by hand — the official image has no env-var equivalent, so this one file falls outside the Komodo Variables pattern) |
 | TREK | `lab54` | `trek/` |
 | scanopy | `lab53` | `scanopy/`; shares the board with Komodo Core/cloudflared; `network_mode: host` + `privileged: true` on `daemon`; LAN-only by decision (maps real network topology) |
 | SysReptor | `lab58` | `sysreptor/`; shares the board with BloodHound CE |
@@ -179,8 +183,9 @@ any hardware/version-pin quirks live as comments in that service's own
   `komodo/stacks/n8n.toml` and `komodo/stacks/cups.toml` interpolate (see "Secrets via Komodo
   Variables" above) before the first deploy of either Stack.
 - Configure the GitHub webhooks toward the `n8n` and `cups` Stacks' `/deploy` in Komodo.
-- On `lab55`: `mkdir -p odoo/addons odoo/config`. In Komodo, create `ODOO_POSTGRES_PASSWORD`
-  ("secret") — interpolated via `komodo/stacks/odoo.toml`.
+- On `lab57`: `mkdir -p odoo/addons odoo/config`, copy `odoo/odoo.conf.example` to
+  `odoo/config/odoo.conf` and set a real `admin_passwd`. In Komodo, create
+  `ODOO_POSTGRES_PASSWORD` ("secret") — interpolated via `komodo/stacks/odoo.toml`.
 - Configure the GitHub webhook toward the `odoo` Stack's `/deploy` in Komodo.
 - On `lab54`: `mkdir -p trek/data trek/uploads`. In Komodo, create `TREK_ENCRYPTION_KEY`
   ("secret") — interpolated via `komodo/stacks/trek.toml`.
