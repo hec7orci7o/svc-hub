@@ -2,7 +2,7 @@
 
 services:
   trek:
-    image: mauriceboe/trek:3.2.1
+    image: mauriceboe/trek:3.4.0
     restart: unless-stopped
     read_only: true
     # CHOWN/SETUID/SETGID: entrypoint needs these to fix bind-mount ownership at startup —
