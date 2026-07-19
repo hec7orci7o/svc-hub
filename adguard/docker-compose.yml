@@ -1,0 +1,45 @@
+# Host prep before first deploy — disable systemd-resolved's stub listener, or this can't
+# bind host port 53 ("address already in use"):
+#   printf '[Resolve]\nDNS=127.0.0.1\nDNSStubListener=no\n' | sudo tee /etc/systemd/resolved.conf.d/adguardhome.conf
+#   sudo mv /etc/resolv.conf /etc/resolv.conf.backup && sudo ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
+#   sudo systemctl reload-or-restart systemd-resolved
+# Then restart any other already-running container — Docker's embedded resolver caches the
+# host's DNS address at container start (confirmed in production: broke Komodo's own DNS).
+#
+# No env vars/config file: admin credentials are set once via the setup wizard on :3000.
+#
+# Web UI + DoH now front through Traefik (see traefik/) on :8080 — port remapped, AdGuard's
+# own :80 setting untouched. Two manual steps not expressible here: enable "allow unencrypted
+# DoH" in Settings > Encryption, and add Traefik's IP to AdGuardHome.yaml's dns.trusted_proxies
+# (check AdGuard's logs after first deploy for the actual source IP).
+
+services:
+  adguard:
+    image: adguard/adguardhome:v0.107.78
+    restart: unless-stopped
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "3000:3000/tcp"
+      - "8080:80/tcp"   # web UI, remapped so Traefik can take :80
+      # DoT/DoQ — inert until a TLS cert is set up in Settings > Encryption.
+      - "853:853/tcp"
+      - "853:853/udp"
+      - "784:784/udp"
+      - "8853:8853/udp"
+    volumes:
+      - adguard_work:/opt/adguardhome/work
+      - adguard_conf:/opt/adguardhome/conf
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    # No cap_drop: needs NET_BIND_SERVICE (port 53) + DAC_OVERRIDE (data volume ownership),
+    # confirmed in production. Upstream's own docker run example doesn't drop capabilities.
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  adguard_work:
+  adguard_conf:

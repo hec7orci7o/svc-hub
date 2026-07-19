@@ -1,0 +1,27 @@
+[[stack]]
+name = "traefik"
+description = "Traefik — reverse proxy / TLS termination, certs via Let's Encrypt DNS-01 (Cloudflare)"
+tags = ["traefik", "ingress"]
+
+[stack.config]
+server = "lab53"
+git_provider = "github.com"
+repo = "hec7orci7o/svc-hub"
+branch = "main"
+run_directory = "traefik"
+file_paths = ["docker-compose.yml"]
+
+environment = """
+CF_DNS_API_TOKEN=[[TRAEFIK_CF_DNS_API_TOKEN]]
+ACME_EMAIL=[[TRAEFIK_ACME_EMAIL]]
+DOMAIN=[[TRAEFIK_DOMAIN]]
+LAN_CIDR=[[TRAEFIK_LAN_CIDR]]
+N8N_BACKEND=[[TRAEFIK_N8N_BACKEND]]
+SYSREPTOR_BACKEND=[[TRAEFIK_SYSREPTOR_BACKEND]]
+BLOODHOUND_BACKEND=[[TRAEFIK_BLOODHOUND_BACKEND]]
+ODOO_BACKEND=[[TRAEFIK_ODOO_BACKEND]]
+TREK_BACKEND=[[TRAEFIK_TREK_BACKEND]]
+SCANOPY_BACKEND=[[TRAEFIK_SCANOPY_BACKEND]]
+ADGUARD_BACKEND=[[TRAEFIK_ADGUARD_BACKEND]]
+KOMODO_BACKEND=[[TRAEFIK_KOMODO_BACKEND]]
+"""

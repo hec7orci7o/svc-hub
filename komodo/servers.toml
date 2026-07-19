@@ -1,0 +1,60 @@
+# "lab53" is auto-created on Core's first boot (KOMODO_FIRST_SERVER_NAME in .env) — keep
+# this block in sync with that so ResourceSync doesn't detect a diff.
+#
+# No `address`: Periphery connects outbound (dials Core), not the other way around — Komodo
+# only expects a Core->Periphery address when this is set, confirmed against Komodo's own
+# source (server.rs doc comment).
+
+[[server]]
+name = "lab53"
+description = "Komodo Core"
+tags = ["core"]
+
+[server.config]
+region = "homelab"
+enabled = true
+
+[[server]]
+name = "lab54"
+description = "Periphery (fleet)"
+tags = ["fleet"]
+
+[server.config]
+region = "homelab"
+enabled = true
+
+[[server]]
+name = "lab55"
+description = "Periphery (fleet)"
+tags = ["fleet"]
+
+[server.config]
+region = "homelab"
+enabled = true
+
+[[server]]
+name = "lab56"
+description = "Periphery (fleet)"
+tags = ["fleet"]
+
+[server.config]
+region = "homelab"
+enabled = true
+
+[[server]]
+name = "lab57"
+description = "Periphery (fleet)"
+tags = ["fleet"]
+
+[server.config]
+region = "homelab"
+enabled = true
+
+[[server]]
+name = "lab58"
+description = "Periphery (fleet)"
+tags = ["fleet"]
+
+[server.config]
+region = "homelab"
+enabled = true

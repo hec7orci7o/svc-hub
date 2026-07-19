@@ -1,0 +1,16 @@
+[[stack]]
+name = "cloudflared"
+description = "Cloudflare Tunnel (official cloudflare/cloudflared image) — the hub's only public ingress"
+tags = ["cloudflared"]
+
+[stack.config]
+server = "lab53"
+git_provider = "github.com"
+repo = "hec7orci7o/svc-hub"
+branch = "main"
+run_directory = "cloudflared"
+file_paths = ["docker-compose.yml"]
+
+environment = """
+TUNNEL_TOKEN=[[CLOUDFLARED_TUNNEL_TOKEN]]
+"""

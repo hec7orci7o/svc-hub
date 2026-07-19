@@ -1,0 +1,24 @@
+# mkdir -p local-files before first deploy.
+
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:2.29.8
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    env_file: ./.env
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./local-files:/files
+
+volumes:
+  n8n_data:

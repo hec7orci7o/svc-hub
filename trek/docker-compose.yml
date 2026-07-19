@@ -1,0 +1,36 @@
+# mkdir -p data uploads before first deploy.
+
+services:
+  trek:
+    image: mauriceboe/trek:3.2.1
+    restart: unless-stopped
+    read_only: true
+    # CHOWN/SETUID/SETGID: entrypoint needs these to fix bind-mount ownership at startup —
+    # upstream's own documented production config, not a hub deviation.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+    tmpfs:
+      - /tmp:noexec,nosuid,size=64m
+    ports:
+      - "3000:3000"
+    env_file: ./.env
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"

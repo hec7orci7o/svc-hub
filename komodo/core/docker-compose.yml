@@ -1,0 +1,42 @@
+services:
+  mongo:
+    # ponytail: Mongo 5.0+ needs ARMv8.2-A; Pi 4 (Cortex-A72) is only ARMv8.0-A, so :latest
+    # SIGILL-crashes. 4.4.18 is the last arm64 build that runs here (EOL, unpatched).
+    # Upgrade path: a Pi 5 (ARMv8.2-A) or non-Pi host.
+    image: mongo:4.4.18
+    labels:
+      komodo.skip:
+    command: --quiet --wiredTigerCacheSizeGB 0.25
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - mongo-data:/data/db
+      - mongo-config:/data/configdb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${KOMODO_DATABASE_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${KOMODO_DATABASE_PASSWORD}
+
+  core:
+    image: ghcr.io/moghtech/komodo-core:2.2.0
+    init: true
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    ports:
+      - "9120:9120"
+    env_file: ./.env
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    environment:
+      KOMODO_DATABASE_ADDRESS: mongo:27017
+    volumes:
+      - keys:/config/keys
+      - ${COMPOSE_KOMODO_BACKUPS_PATH}:/backups
+
+volumes:
+  mongo-data:
+  mongo-config:
+  keys:

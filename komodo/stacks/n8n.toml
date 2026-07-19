@@ -1,0 +1,41 @@
+[[stack]]
+name = "n8n"
+description = "n8n (official docker.n8n.io/n8nio/n8n image)"
+tags = ["n8n"]
+
+[stack.config]
+server = "lab56"
+git_provider = "github.com"
+repo = "hec7orci7o/svc-hub"
+branch = "main"
+run_directory = "n8n"
+file_paths = ["docker-compose.yml"]
+
+environment = """
+GENERIC_TIMEZONE=Europe/Madrid
+TZ=Europe/Madrid
+
+N8N_HOST=n8n.hectortoral.com
+N8N_PORT=5678
+N8N_PROTOCOL=http
+WEBHOOK_URL=https://n8n.hectortoral.com/
+N8N_SECURE_COOKIE=false
+
+N8N_ENCRYPTION_KEY=[[N8N_ENCRYPTION_KEY]]
+
+N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+N8N_RESTRICT_FILE_ACCESS_TO=/files
+
+N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+NODE_FUNCTION_ALLOW_EXTERNAL=cheerio
+
+NODE_ENV=production
+
+# Single-quoted: a bcrypt hash's own "$" chars get eaten by Compose's env_file
+# interpolation otherwise (confirmed in production).
+N8N_INSTANCE_OWNER_MANAGED_BY_ENV=true
+N8N_INSTANCE_OWNER_EMAIL=[[N8N_INSTANCE_OWNER_EMAIL]]
+N8N_INSTANCE_OWNER_FIRST_NAME=[[N8N_INSTANCE_OWNER_FIRST_NAME]]
+N8N_INSTANCE_OWNER_LAST_NAME=[[N8N_INSTANCE_OWNER_LAST_NAME]]
+N8N_INSTANCE_OWNER_PASSWORD_HASH='[[N8N_INSTANCE_OWNER_PASSWORD_HASH]]'
+"""

@@ -1,0 +1,171 @@
+# All LAN-only except n8n (real control is no Public Hostname in cloudflared, not lan-only —
+# see CLAUDE.md). cups skipped: would hit the Host-header bug already fixed once this session.
+#
+# certResolver+domains repeated per router: entrypoint-level default alone never triggered
+# ACME (confirmed in production); domains must stay explicit or it'd infer per-host from Host().
+
+http:
+  routers:
+    # Public by design, unlike everything else below (webhooks).
+    n8n:
+      rule: 'Host(`n8n.{{ env "DOMAIN" }}`)'
+      entryPoints: [websecure]
+      service: n8n
+      middlewares: [security-headers]
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: '{{ env "DOMAIN" }}'
+            sans:
+              - '*.{{ env "DOMAIN" }}'
+        options: modern@file
+
+    sysreptor:
+      rule: 'Host(`sysreptor.{{ env "DOMAIN" }}`)'
+      entryPoints: [websecure]
+      service: sysreptor
+      middlewares: [security-headers, lan-only]
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: '{{ env "DOMAIN" }}'
+            sans:
+              - '*.{{ env "DOMAIN" }}'
+        options: modern@file
+
+    bloodhound:
+      rule: 'Host(`bloodhound.{{ env "DOMAIN" }}`)'
+      entryPoints: [websecure]
+      service: bloodhound
+      middlewares: [security-headers, lan-only]
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: '{{ env "DOMAIN" }}'
+            sans:
+              - '*.{{ env "DOMAIN" }}'
+        options: modern@file
+
+    odoo:
+      # No route for the 8072 longpolling port (live chat etc.) yet.
+      rule: 'Host(`odoo.{{ env "DOMAIN" }}`)'
+      entryPoints: [websecure]
+      service: odoo
+      middlewares: [security-headers, lan-only]
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: '{{ env "DOMAIN" }}'
+            sans:
+              - '*.{{ env "DOMAIN" }}'
+        options: modern@file
+
+    trek:
+      rule: 'Host(`trek.{{ env "DOMAIN" }}`)'
+      entryPoints: [websecure]
+      service: trek
+      middlewares: [security-headers, lan-only]
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: '{{ env "DOMAIN" }}'
+            sans:
+              - '*.{{ env "DOMAIN" }}'
+        options: modern@file
+
+    scanopy:
+      # scanopy.toml's SCANOPY_PUBLIC_URL still points at the old address — not updated here.
+      rule: 'Host(`scanopy.{{ env "DOMAIN" }}`)'
+      entryPoints: [websecure]
+      service: scanopy
+      middlewares: [security-headers, lan-only]
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: '{{ env "DOMAIN" }}'
+            sans:
+              - '*.{{ env "DOMAIN" }}'
+        options: modern@file
+
+    adguard:
+      rule: 'Host(`adguard.{{ env "DOMAIN" }}`)'
+      entryPoints: [websecure]
+      service: adguard
+      middlewares: [security-headers, lan-only]
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: '{{ env "DOMAIN" }}'
+            sans:
+              - '*.{{ env "DOMAIN" }}'
+        options: modern@file
+
+    # Public: only /listener/* (GitHub webhook path), so GitHub can reach /deploy without
+    # exposing the rest of the dashboard/API. Port 9120 also stays published directly.
+    komodo-webhook:
+      rule: 'Host(`komodo.{{ env "DOMAIN" }}`) && PathPrefix(`/listener`)'
+      entryPoints: [websecure]
+      service: komodo
+      middlewares: [security-headers]
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: '{{ env "DOMAIN" }}'
+            sans:
+              - '*.{{ env "DOMAIN" }}'
+        options: modern@file
+
+    komodo:
+      rule: 'Host(`komodo.{{ env "DOMAIN" }}`)'
+      entryPoints: [websecure]
+      service: komodo
+      middlewares: [security-headers, lan-only]
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: '{{ env "DOMAIN" }}'
+            sans:
+              - '*.{{ env "DOMAIN" }}'
+        options: modern@file
+
+  services:
+    # IP:port, not <board>.local — this container has no mDNS resolver.
+    n8n:
+      loadBalancer:
+        servers:
+          - url: 'http://{{ env "N8N_BACKEND" }}'
+
+    sysreptor:
+      loadBalancer:
+        servers:
+          - url: 'http://{{ env "SYSREPTOR_BACKEND" }}'
+
+    bloodhound:
+      loadBalancer:
+        servers:
+          - url: 'http://{{ env "BLOODHOUND_BACKEND" }}'
+
+    odoo:
+      loadBalancer:
+        servers:
+          - url: 'http://{{ env "ODOO_BACKEND" }}'
+
+    trek:
+      loadBalancer:
+        servers:
+          - url: 'http://{{ env "TREK_BACKEND" }}'
+
+    scanopy:
+      loadBalancer:
+        servers:
+          - url: 'http://{{ env "SCANOPY_BACKEND" }}'
+
+    adguard:
+      loadBalancer:
+        servers:
+          - url: 'http://{{ env "ADGUARD_BACKEND" }}'
+
+    komodo:
+      loadBalancer:
+        servers:
+          - url: 'http://{{ env "KOMODO_BACKEND" }}'

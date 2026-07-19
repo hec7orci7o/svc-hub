@@ -1,0 +1,57 @@
+services:
+  traefik:
+    image: traefik:v3.7.8
+    restart: unless-stopped
+    command:
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --providers.file.watch=true
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.http.tls.certresolver=cloudflare
+      # Wildcard at the entrypoint, not per-router — per-router certs leak hostnames to CT logs.
+      - --entrypoints.websecure.http.tls.domains[0].main=${DOMAIN}
+      - --entrypoints.websecure.http.tls.domains[0].sans=*.${DOMAIN}
+      - --certificatesresolvers.cloudflare.acme.dnschallenge=true
+      - --certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare
+      # Propagation check needs a resolver that isn't the LAN's own (AdGuard) — confirmed in
+      # production: it never saw the fresh TXT record, timing the challenge out.
+      - --certificatesresolvers.cloudflare.acme.dnschallenge.resolvers=1.1.1.1:53,8.8.8.8:53
+      - --certificatesresolvers.cloudflare.acme.email=${ACME_EMAIL}
+      - --certificatesresolvers.cloudflare.acme.storage=/letsencrypt/acme.json
+      - --api.dashboard=false
+      - --global.checkNewVersion=false
+      - --ping=true
+      - --log.level=INFO
+      - --accesslog=true
+    env_file: ./.env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./dynamic:/etc/traefik/dynamic:ro
+      - traefik_certs:/letsencrypt
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # NET_BIND_SERVICE: binds host ports 80/443, blocked otherwise even for root.
+    cap_add:
+      - NET_BIND_SERVICE
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+volumes:
+  traefik_certs:

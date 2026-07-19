@@ -1,0 +1,46 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "timezone": "Europe/Madrid",
+  "schedule": ["before 6am every day"],
+  "packageRules": [
+    {
+      "matchManagers": ["docker-compose"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "groupName": "docker image updates (patch/minor)",
+      "automerge": true,
+      "platformAutomerge": true
+    },
+    {
+      "matchManagers": ["docker-compose"],
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    },
+    {
+      "matchManagers": ["docker-compose"],
+      "matchPackageNames": ["ghcr.io/scanopy/scanopy/daemon", "ghcr.io/scanopy/scanopy/server"],
+      "matchUpdateTypes": ["minor"],
+      "automerge": false
+    },
+    {
+      "matchManagers": ["docker-compose"],
+      "matchFileNames": ["bloodhound-ce/docker-compose.yml"],
+      "matchPackageNames": ["neo4j"],
+      "matchUpdateTypes": ["minor"],
+      "automerge": false
+    },
+    {
+      "matchManagers": ["docker-compose"],
+      "matchPackageNames": ["adguard/adguardhome"],
+      "matchUpdateTypes": ["minor"],
+      "automerge": false
+    },
+    {
+      "matchManagers": ["docker-compose"],
+      "matchFileNames": ["komodo/core/docker-compose.yml"],
+      "matchPackageNames": ["mongo"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    }
+  ]
+}

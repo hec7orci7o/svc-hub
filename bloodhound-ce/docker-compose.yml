@@ -1,0 +1,80 @@
+services:
+  app-db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      PGUSER: ${POSTGRES_USER:-bloodhound}
+      POSTGRES_USER: ${POSTGRES_USER:-bloodhound}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Please set POSTGRES_PASSWORD in .env file}
+      POSTGRES_DB: ${POSTGRES_DB:-bloodhound}
+    # Not published to the host — only `bloodhound` below is reachable over the LAN.
+    volumes:
+      - app-db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bloodhound} -d ${POSTGRES_DB:-bloodhound} -h 127.0.0.1 -p 5432"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+
+  graph-db:
+    # Pinned to the 4.4 line: BloodHound CE's graph schema targets it, not 5.x (renovate.json
+    # keeps minor bumps off automerge here).
+    image: neo4j:4.4.42
+    restart: unless-stopped
+    environment:
+      # NEO4J_AUTH is parsed as user/password — NEO4J_SECRET must be hex, not base64 (a "/"
+      # breaks the split; confirmed in production).
+      NEO4J_AUTH: ${NEO4J_USER:-neo4j}/${NEO4J_SECRET:?Please set NEO4J_SECRET in .env file}
+      NEO4J_dbms_allow__upgrade: "true"
+    # Not published to the host, same as app-db — Neo4j's browser is a second attack surface.
+    volumes:
+      - graph-db-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -O /dev/null -q http://localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+
+  bloodhound:
+    image: specterops/bloodhound:9.4.0
+    restart: unless-stopped
+    depends_on:
+      app-db:
+        condition: service_healthy
+      graph-db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      bhe_database_connection: user=${POSTGRES_USER:-bloodhound} password=${POSTGRES_PASSWORD:?Please set POSTGRES_PASSWORD in .env file} dbname=${POSTGRES_DB:-bloodhound} host=app-db
+      bhe_neo4j_connection: neo4j://${NEO4J_USER:-neo4j}:${NEO4J_SECRET:?Please set NEO4J_SECRET in .env file}@graph-db:7687/
+      bhe_graph_driver: neo4j
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+volumes:
+  app-db-data:
+  graph-db-data:

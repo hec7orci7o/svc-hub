@@ -1,0 +1,24 @@
+[[stack]]
+name = "trek"
+description = "TREK — self-hosted collaborative travel planner (mauriceboe/trek image)"
+tags = ["trek"]
+
+[stack.config]
+server = "lab54"
+git_provider = "github.com"
+repo = "hec7orci7o/svc-hub"
+branch = "main"
+run_directory = "trek"
+file_paths = ["docker-compose.yml"]
+
+environment = """
+NODE_ENV=production
+PORT=3000
+ENCRYPTION_KEY=[[TREK_ENCRYPTION_KEY]]
+TZ=Europe/Madrid
+LOG_LEVEL=info
+ALLOWED_ORIGINS=
+APP_URL=https://trek.hectortoral.com
+ADMIN_EMAIL=
+ADMIN_PASSWORD=
+"""

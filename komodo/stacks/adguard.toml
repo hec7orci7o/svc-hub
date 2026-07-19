@@ -1,0 +1,12 @@
+[[stack]]
+name = "adguard"
+description = "AdGuard Home — network-wide DNS ad/tracker blocker (official adguard/adguardhome image)"
+tags = ["adguard", "dns"]
+
+[stack.config]
+server = "lab53"
+git_provider = "github.com"
+repo = "hec7orci7o/svc-hub"
+branch = "main"
+run_directory = "adguard"
+file_paths = ["docker-compose.yml"]

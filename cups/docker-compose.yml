@@ -1,0 +1,24 @@
+services:
+  cups:
+    # Dated tag (focal-YYYYMMDD), not semver — Renovate opens a PR per date, review each.
+    image: drpsychick/airprint-bridge:focal-20260706
+    restart: unless-stopped
+    # AirPrint/Bonjour mDNS broadcasts don't cross a bridge network.
+    network_mode: host
+    # privileged: true is required for USB passthrough + Avahi/dbus; no-new-privileges/
+    # cap_drop are moot under it, not an oversight.
+    privileged: true
+    env_file: ./.env
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    volumes:
+      - cups_config:/config
+      - /var/run/dbus:/var/run/dbus
+    devices:
+      - /dev/bus/usb:/dev/bus/usb
+
+volumes:
+  cups_config:

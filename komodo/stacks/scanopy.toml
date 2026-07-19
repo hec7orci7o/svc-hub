@@ -1,0 +1,18 @@
+[[stack]]
+name = "scanopy"
+description = "scanopy — network topology documentation (ghcr.io/scanopy images + Postgres)"
+tags = ["scanopy"]
+
+[stack.config]
+server = "lab53"
+git_provider = "github.com"
+repo = "hec7orci7o/svc-hub"
+branch = "main"
+run_directory = "scanopy"
+file_paths = ["docker-compose.yml"]
+
+environment = """
+SCANOPY_LOG_LEVEL=info
+POSTGRES_PASSWORD=[[SCANOPY_POSTGRES_PASSWORD]]
+SCANOPY_PUBLIC_URL=https://scanopy.hectortoral.com
+"""
