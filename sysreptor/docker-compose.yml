@@ -26,7 +26,7 @@ services:
       - no-new-privileges:true
 
   redis:
-    image: redis:8.0-alpine
+    image: redis:8.8-alpine
     restart: unless-stopped
     command: sh -c 'exec redis-server --requirepass "$$REDIS_PASSWORD"'
     environment:
@@ -42,7 +42,7 @@ services:
       - ALL
 
   app:
-    image: syslifters/sysreptor:2026.50
+    image: syslifters/sysreptor:2026.55
     restart: unless-stopped
     init: true
     depends_on:

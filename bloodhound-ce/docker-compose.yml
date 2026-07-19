@@ -27,7 +27,7 @@ services:
   graph-db:
     # Pinned to the 4.4 line: BloodHound CE's graph schema targets it, not 5.x (renovate.json
     # keeps minor bumps off automerge here).
-    image: neo4j:4.4.42
+    image: neo4j:4.4.48
     restart: unless-stopped
     environment:
       # NEO4J_AUTH is parsed as user/password — NEO4J_SECRET must be hex, not base64 (a "/"
