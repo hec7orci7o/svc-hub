@@ -1,6 +1,6 @@
 ---
 name: docker-compose-reviewer
-description: Reviews the hub's docker-compose.yml files (n8n/, komodo/core/, cloudflared/, and any new deploy-only service) against best practices for Raspberry Pi (HEALTHCHECK, pinned tags, secrets hygiene, no-new-privileges/cap_drop). Use after creating or modifying any docker-compose.yml in the repo.
+description: Reviews the hub's docker-compose.yml files (n8n/, komodo/, cloudflared/, and any new deploy-only service) against best practices for Raspberry Pi (HEALTHCHECK, pinned tags, secrets hygiene, no-new-privileges/cap_drop). Use after creating or modifying any docker-compose.yml in the repo.
 tools: Read, Grep, Glob
 model: inherit
 ---

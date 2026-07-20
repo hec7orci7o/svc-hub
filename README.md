@@ -7,18 +7,18 @@ already-published image and Komodo deploys it straight from `docker-compose.yml`
 
 ## What's here
 
-One folder per service at the repo root, each with a `docker-compose.yml` + `.env.example`.
-`komodo/servers.toml` declares the fleet; `komodo/stacks/*.toml` declares which board runs
-each service and how, synced via Komodo's ResourceSync. `komodo/core/` is Komodo itself
-(Core + Mongo + local Periphery).
+One folder per service at the repo root, each with a `docker-compose.yml` + `.env.example` +
+`<name>.toml` (its Komodo Stack definition). `komodo/resources.toml` declares the fleet, synced
+via Komodo's ResourceSync. `komodo/` is also where Komodo itself lives (Core + Mongo + local
+Periphery).
 
 ## Getting started
 
-1. **Deploy Komodo Core**: `git clone` this repo onto that board, `cd komodo/core`,
+1. **Deploy Komodo Core**: `git clone` this repo onto that board, `cd komodo`,
    `cp .env.example .env` and fill in real secrets, then `docker compose up -d`.
 2. **Create your account** via the signup button on Core's UI (no admin is auto-created).
 3. **Bootstrap the first ResourceSync** in the Komodo UI, pointed at this repo — from then on,
-   `komodo/servers.toml` and `komodo/stacks/*.toml` are managed entirely through git.
+   `komodo/resources.toml` and every service's `<name>.toml` are managed entirely through git.
 4. **Connect the rest of the fleet** following `komodo/CONNECT-SERVERS.md`.
 5. **Deploy each service**: `.env.example` → `.env` → fill in → `docker compose up -d` →
    register that Stack's `/deploy` webhook in GitHub. Any secrets a service needs go through

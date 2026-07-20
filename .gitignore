@@ -1,4 +1,4 @@
-# Env (.env already covers komodo/core/.env, n8n/.env, cloudflared/.env — the
+# Env (.env already covers komodo/.env, n8n/.env, cloudflared/.env — the
 # pattern matches any subfolder)
 .env
 *.env.local

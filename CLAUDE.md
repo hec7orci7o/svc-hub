@@ -6,22 +6,21 @@ See `README.md` for a getting-started cheatsheet.
 
 ## Fleet
 
-Declared as code in `komodo/servers.toml` — no `address` set, since Periphery connects outbound
+Declared as code in `komodo/resources.toml` — no `address` set, since Periphery connects outbound
 (dials Core) rather than Core dialing Periphery. Everywhere else that needs a real address
 (Traefik backends, `komodo/CONNECT-SERVERS.md`) uses the real LAN IP, not `<name>.local` — mDNS
 doesn't resolve from inside a container (no Avahi/nss-mdns in most images, confirmed against
-Traefik). What runs where: `grep "server = " komodo/stacks/*.toml` — don't duplicate that
+Traefik). What runs where: `grep "server = " */*.toml` — don't duplicate that
 mapping here, it changes with every new/moved service.
 
 ## Structure
 
 ```
-komodo/                    # Resource Sync (servers.toml, stacks/<name>.toml)
-komodo/core/               # How to deploy Komodo Core+Mongo+Periphery itself
+komodo/                    # Resource Sync (resources.toml) + how to deploy Komodo Core itself
 komodo/CONNECT-SERVERS.md  # How to connect the rest of the fleet via Periphery
 renovate.json               # Automatic image version updates
 .claude/agents/             # Review/scaffolding subagents
-<service>/                  # One folder per deploy-only service (docker-compose.yml + .env.example)
+<service>/                  # One folder per deploy-only service (docker-compose.yml + .env.example + <name>.toml)
 ```
 
 **Every service in this hub is deploy-only.** No build step, no Dockerfile, no registry we
@@ -36,7 +35,7 @@ Use the `service-scaffolder` subagent, or by hand:
 1. Create `<name>/{docker-compose.yml,.env.example}`, referencing the official upstream image
    directly, version **pinned as a literal tag in `docker-compose.yml`** (not behind an env
    var — see the Renovate coverage rule below). Use any existing service folder as a template.
-2. Create `komodo/stacks/<name>.toml` following an existing one as the schema reference (same
+2. Create `<name>/<name>.toml` following an existing one as the schema reference (same
    `git_provider`/`repo`/`branch`; change `file_paths`/`server`).
 3. Configure a GitHub webhook pointing at that Stack's `/deploy` (Komodo UI, Stack Config >
    Webhooks) — there's no CI to trigger it from.
@@ -60,7 +59,7 @@ DB-image case — e.g. a one-off `NET_BIND_SERVICE` for binding a privileged por
 ## Secrets via Komodo Variables
 
 Default pattern for any secret a service needs: an `environment` block in that service's
-`komodo/stacks/<name>.toml`, referencing secrets as `[[VARIABLE_NAME]]` instead of literal
+`<name>/<name>.toml`, referencing secrets as `[[VARIABLE_NAME]]` instead of literal
 values. Komodo resolves those against Settings > Variables (mark sensitive ones "secret") and
 writes the result to `.env` on the host right before `docker compose up -d` — no hand-copied
 `.env` needed. Variable names are prefixed per-service (they're global in Komodo, not scoped
@@ -118,8 +117,9 @@ certs would leak LAN-only hostnames to public CT logs (crt.sh).
 and per-deploy config only. This is what makes patch/minor automerge actually fire.
 
 Distinction that matters in Komodo: the GitHub webhook toward the `ResourceSync` triggers
-`/sync` (re-reads `servers.toml`/`stacks/*.toml`, topology changes); the webhook toward a
-specific Stack is `/deploy` (new image or updated compose for one service). Not the same thing.
+`/sync` (re-reads `resources.toml` and every service's `<name>.toml`, topology changes); the
+webhook toward a specific Stack is `/deploy` (new image or updated compose for one service).
+Not the same thing.
 
 **GitHub App hosted**, not self-hosted — `renovate.json` is all the config needed, no
 container to maintain. Automerge exceptions (pre-1.0 packages, pinned majors, etc.) live in
@@ -148,18 +148,21 @@ docker compose -f <folder>/docker-compose.yml config   # validate syntax
 
 One-time bootstrap:
 - `KOMODO_WEBHOOK_SECRET` is not a GitHub Actions secret (there's no workflow to consume it):
-  it's the value Komodo Core validates incoming webhooks against (`komodo/core/.env.example`),
+  it's the value Komodo Core validates incoming webhooks against (`komodo/.env.example`),
   and must match the "Secret" field entered when creating each Stack's native GitHub webhook.
 - Enable "Allow auto-merge" in GitHub repo settings, install the Renovate GitHub App.
-- Deploy Komodo Core (`komodo/core/.env.example` → `.env` → `docker compose up -d`), connect
+- Deploy Komodo Core (`komodo/.env.example` → `.env` → `docker compose up -d`), connect
   the rest of the fleet (`komodo/CONNECT-SERVERS.md`), then bootstrap the first `ResourceSync`
   in the Komodo UI (it can't self-create from a file it isn't reading yet) and register its
-  webhook.
+  webhook. The Sync's own `resource_path` (set in the Komodo UI, not in git) must cover the
+  whole repo now that each service's `<name>.toml` lives in that service's own folder instead
+  of all being under `komodo/stacks/` — narrow it to `komodo/` and Komodo stops seeing every
+  other Stack.
 
 Per service, before its first deploy:
 - Create any bind-mount directories it needs (see the `mkdir` line in its
   `docker-compose.yml` header comment, if any).
-- Create the Komodo Variables its `komodo/stacks/<name>.toml` interpolates (see "Secrets via
+- Create the Komodo Variables its `<name>/<name>.toml` interpolates (see "Secrets via
   Komodo Variables" above) — check that file's `environment` block for the exact names.
 - Configure the GitHub webhook toward that Stack's `/deploy` in Komodo.
 - Any further first-boot step (setting a master password, importing data, host-level prep) is

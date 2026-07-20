@@ -43,7 +43,7 @@
     },
     {
       "matchManagers": ["docker-compose"],
-      "matchFileNames": ["komodo/core/docker-compose.yml"],
+      "matchFileNames": ["komodo/docker-compose.yml"],
       "matchPackageNames": ["mongo"],
       "matchUpdateTypes": ["major"],
       "enabled": false

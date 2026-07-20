@@ -22,7 +22,7 @@ any other board.
 
    `--core-address` below must be the direct IP, never the Traefik-fronted domain — Periphery
    has no LAN DNS for it and fails outright (confirmed in production: `Name or service not
-   known`). This is also why `komodo/servers.toml` has no `address` field: Periphery dials
+   known`). This is also why `komodo/resources.toml` has no `address` field: Periphery dials
    Core (outbound), not the other way around — setting one signals the opposite mode.
 
 2. **Install Periphery** with the official script (example with `lab56`, which runs n8n —
@@ -42,7 +42,7 @@ any other board.
    ```
 
    `--connect-as` must match the `name` of the corresponding `[[server]]` entry in
-   `komodo/servers.toml` (`lab53`, `lab54`, `lab55`, `lab56`, `lab57`, or `lab58`).
+   `komodo/resources.toml` (`lab53`, `lab54`, `lab55`, `lab56`, `lab57`, or `lab58`).
 
 3. **Confirm the connection status** in the Komodo Core UI (should show `OK`), then remove
    `onboarding_key` from `/etc/komodo/periphery.config.toml` and restart the service — left in
