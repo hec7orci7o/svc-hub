@@ -14,18 +14,17 @@
     {
       "matchManagers": ["docker-compose"],
       "matchUpdateTypes": ["major"],
-      "automerge": false
+      "automerge": false,
+      "additionalBranchPrefix": "{{parentDir}}-"
     },
     {
       "matchManagers": ["docker-compose"],
-      "matchPackageNames": ["ghcr.io/scanopy/scanopy/daemon", "ghcr.io/scanopy/scanopy/server"],
-      "matchUpdateTypes": ["minor"],
-      "automerge": false
-    },
-    {
-      "matchManagers": ["docker-compose"],
-      "matchFileNames": ["bloodhound-ce/docker-compose.yml"],
-      "matchPackageNames": ["neo4j"],
+      "matchPackageNames": [
+        "ghcr.io/scanopy/scanopy/daemon",
+        "ghcr.io/scanopy/scanopy/server",
+        "neo4j",
+        "adguard/adguardhome"
+      ],
       "matchUpdateTypes": ["minor"],
       "automerge": false
     },
@@ -35,12 +34,6 @@
       "matchPackageNames": ["neo4j"],
       "matchUpdateTypes": ["major"],
       "enabled": false
-    },
-    {
-      "matchManagers": ["docker-compose"],
-      "matchPackageNames": ["adguard/adguardhome"],
-      "matchUpdateTypes": ["minor"],
-      "automerge": false
     },
     {
       "matchManagers": ["docker-compose"],
