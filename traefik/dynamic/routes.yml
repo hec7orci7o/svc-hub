@@ -100,6 +100,21 @@ http:
               - '*.{{ env "DOMAIN" }}'
         options: modern@file
 
+    # Public by design like n8n: an ecommerce storefront needs to be reachable from outside
+    # the LAN. Needs a real cloudflared Public Hostname + AdGuard rewrite to actually go live.
+    wordpress:
+      rule: 'Host(`wordpress.{{ env "DOMAIN" }}`)'
+      entryPoints: [websecure]
+      service: wordpress
+      middlewares: [security-headers]
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: '{{ env "DOMAIN" }}'
+            sans:
+              - '*.{{ env "DOMAIN" }}'
+        options: modern@file
+
     # Public: only /listener/* (GitHub webhook path), so GitHub can reach /deploy without
     # exposing the rest of the dashboard/API. Port 9120 also stays published directly.
     komodo-webhook:
@@ -169,3 +184,8 @@ http:
       loadBalancer:
         servers:
           - url: 'http://{{ env "KOMODO_BACKEND" }}'
+
+    wordpress:
+      loadBalancer:
+        servers:
+          - url: 'http://{{ env "WORDPRESS_BACKEND" }}'

@@ -1,0 +1,19 @@
+[[stack]]
+name = "wordpress"
+description = "WordPress + MariaDB (official images) — ecommerce template"
+tags = ["wordpress"]
+
+[stack.config]
+server = "lab55"
+git_provider = "github.com"
+repo = "hec7orci7o/svc-hub"
+branch = "main"
+run_directory = "wordpress"
+file_paths = ["docker-compose.yml"]
+
+environment = """
+MARIADB_DATABASE=wordpress
+MARIADB_USER=wordpress
+MARIADB_PASSWORD=[[WORDPRESS_MARIADB_PASSWORD]]
+MARIADB_ROOT_PASSWORD=[[WORDPRESS_MARIADB_ROOT_PASSWORD]]
+"""
