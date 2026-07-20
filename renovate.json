@@ -21,11 +21,17 @@
       "matchManagers": ["docker-compose"],
       "matchPackageNames": [
         "ghcr.io/scanopy/scanopy/daemon",
-        "ghcr.io/scanopy/scanopy/server",
-        "neo4j",
-        "adguard/adguardhome"
+        "ghcr.io/scanopy/scanopy/server"
       ],
       "matchUpdateTypes": ["minor"],
+      "groupName": "scanopy (needs manual review)",
+      "automerge": false
+    },
+    {
+      "matchManagers": ["docker-compose"],
+      "matchPackageNames": ["neo4j", "adguard/adguardhome"],
+      "matchUpdateTypes": ["minor"],
+      "groupName": null,
       "automerge": false
     },
     {
