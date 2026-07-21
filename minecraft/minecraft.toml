@@ -1,0 +1,36 @@
+[[stack]]
+name = "minecraft"
+description = "Minecraft Java Edition server (official itzg/minecraft-server image)"
+tags = ["minecraft"]
+
+[stack.config]
+server = "lab54"
+git_provider = "github.com"
+repo = "hec7orci7o/svc-hub"
+branch = "main"
+run_directory = "minecraft"
+file_paths = ["docker-compose.yml"]
+
+environment = """
+TZ=Europe/Madrid
+
+EULA=TRUE
+
+TYPE=PURPUR
+VERSION=LATEST
+
+MEMORY=4G
+
+MAX_PLAYERS=10
+DIFFICULTY=normal
+MOTD=A Minecraft Server
+
+MODRINTH_PROJECTS=essentialsx,vaultunlocked,griefprevention,chunky,auraskills,healthbar,silkspawners,viaversion,simple-voice-chat,quickshop-hikari,grimac
+
+ENABLE_RCON=true
+RCON_PASSWORD=[[MINECRAFT_RCON_PASSWORD]]
+
+RCON_CMDS_STARTUP="gamerule playersSleepingPercentage 50
+chunky radius 2000
+chunky start"
+"""

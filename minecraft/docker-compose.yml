@@ -1,0 +1,28 @@
+# mkdir -p data && sudo chown -R 1000:1000 data   before first deploy.
+# Non-root (user: 1000:1000) is unverified against itzg's entrypoint — if startup fails on a
+# root-only step, drop `user:` below and add `cap_add: [CHOWN, SETUID, SETGID]` instead.
+
+services:
+  minecraft:
+    image: itzg/minecraft-server:2026.7.2
+    restart: unless-stopped
+    stop_grace_period: 60s
+    user: "1000:1000"
+    stdin_open: true
+    tty: true
+    ports:
+      - "25565:25565"
+      - "24454:24454/udp"  # Simple Voice Chat
+    env_file: ./.env
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    volumes:
+      - ./data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "mc-health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 600s  # first boot: jar + world-gen + downloading plugins + pregen kickoff, on a Pi
