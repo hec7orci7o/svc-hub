@@ -1,0 +1,83 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-infisical}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Please set POSTGRES_PASSWORD in .env file}
+      POSTGRES_DB: ${POSTGRES_DB:-infisical}
+    # Not published to the host — only `infisical` below is reachable over the LAN.
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-infisical} -d ${POSTGRES_DB:-infisical}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: sh -c 'exec redis-server --requirepass "$$REDIS_PASSWORD"'
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Please set REDIS_PASSWORD in .env file}
+    # Not published to the host — internal cache/queue only.
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+
+  infisical:
+    image: infisical/infisical:v0.162.10
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      NODE_ENV: production
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Please set ENCRYPTION_KEY in .env file}
+      AUTH_SECRET: ${AUTH_SECRET:?Please set AUTH_SECRET in .env file}
+      DB_CONNECTION_URI: postgres://${POSTGRES_USER:-infisical}:${POSTGRES_PASSWORD:?Please set POSTGRES_PASSWORD in .env file}@db:5432/${POSTGRES_DB:-infisical}
+      REDIS_URL: redis://:${REDIS_PASSWORD:?Please set REDIS_PASSWORD in .env file}@redis:6379
+      SITE_URL: ${SITE_URL:?Please set SITE_URL in .env file}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/status"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+volumes:
+  db-data:
+  redis-data:

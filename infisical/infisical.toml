@@ -1,0 +1,24 @@
+[[stack]]
+name = "infisical"
+description = "Infisical — secrets management (official infisical/infisical image)"
+tags = ["infisical", "security"]
+
+[stack.config]
+server = "lab53"
+git_provider = "github.com"
+repo = "hec7orci7o/svc-hub"
+branch = "main"
+run_directory = "infisical"
+file_paths = ["docker-compose.yml"]
+
+environment = """
+POSTGRES_USER=infisical
+POSTGRES_DB=infisical
+POSTGRES_PASSWORD=[[INFISICAL_POSTGRES_PASSWORD]]
+
+ENCRYPTION_KEY=[[INFISICAL_ENCRYPTION_KEY]]
+AUTH_SECRET=[[INFISICAL_AUTH_SECRET]]
+REDIS_PASSWORD=[[INFISICAL_REDIS_PASSWORD]]
+
+SITE_URL=https://infisical.hectortoral.com
+"""

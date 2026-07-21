@@ -156,6 +156,19 @@ http:
               - '*.{{ env "DOMAIN" }}'
         options: modern@file
 
+    infisical:
+      rule: 'Host(`infisical.{{ env "DOMAIN" }}`)'
+      entryPoints: [websecure]
+      service: infisical
+      middlewares: [security-headers, lan-only]
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: '{{ env "DOMAIN" }}'
+            sans:
+              - '*.{{ env "DOMAIN" }}'
+        options: modern@file
+
   services:
     # IP:port, not <board>.local — this container has no mDNS resolver.
     n8n:
@@ -207,3 +220,8 @@ http:
       loadBalancer:
         servers:
           - url: 'http://{{ env "HOME_ASSISTANT_BACKEND" }}'
+
+    infisical:
+      loadBalancer:
+        servers:
+          - url: 'http://{{ env "INFISICAL_BACKEND" }}'
