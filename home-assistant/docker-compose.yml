@@ -8,7 +8,7 @@
 
 services:
   home-assistant:
-    image: homeassistant/home-assistant:2026.7.2
+    image: homeassistant/home-assistant:2026.7.4
     restart: unless-stopped
     # No `user:` — Home Assistant Container doesn't officially support a non-root UID (some
     # integrations expect root-level device/network access). cap_drop:[ALL] + no-new-privileges
