@@ -25,7 +25,10 @@ MAX_PLAYERS=10
 DIFFICULTY=normal
 MOTD=A Minecraft Server
 
-MODRINTH_PROJECTS=essentialsx,vaultunlocked,griefprevention,chunky,auraskills,healthbar,silkspawners,viaversion,simple-voice-chat,quickshop-hikari,grimac
+# griefprevention marked optional (trailing ?): with VERSION=LATEST, a plugin can lag
+# behind the newest MC release — Modrinth only has griefprevention builds up to 1.21.11
+# right now. Optional skips it with a warning instead of failing the whole boot.
+MODRINTH_PROJECTS=essentialsx,vaultunlocked,griefprevention?,chunky,auraskills,healthbar,silkspawners,viaversion,simple-voice-chat,quickshop-hikari,grimac
 
 ENABLE_RCON=true
 RCON_PASSWORD=[[MINECRAFT_RCON_PASSWORD]]
