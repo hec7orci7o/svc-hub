@@ -58,3 +58,15 @@ tags = ["fleet"]
 [server.config]
 region = "homelab"
 enabled = true
+
+# Referenced by every stack's `linked_repo` below instead of each one repeating
+# git_provider/repo/branch. `repo` uses owner/svc-hub form, matching `name`.
+[[repo]]
+name = "hec7orci7o/svc-hub"
+
+[repo.config]
+git_account = "hec7orci7o"
+repo = "hec7orci7o/svc-hub"
+links = [
+  "github.com/hec7orci7o/svc-hub"
+]

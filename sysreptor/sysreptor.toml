@@ -5,11 +5,12 @@ tags = ["sysreptor", "security"]
 
 [stack.config]
 server = "lab58"
-git_provider = "github.com"
-repo = "hec7orci7o/svc-hub"
-branch = "main"
+links = ["sysreptor.hectortoral.com"]
+linked_repo = "hec7orci7o/svc-hub"
 run_directory = "sysreptor"
 file_paths = ["docker-compose.yml"]
+registry_provider = "docker.io"
+registry_account = "hec7or"
 
 environment = """
 POSTGRES_USER=reportcreator
