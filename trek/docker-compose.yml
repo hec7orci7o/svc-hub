@@ -3,7 +3,7 @@ services:
     image: mauriceboe/trek:3.4.1
     restart: unless-stopped
     read_only: true
-    # CHOWN/SETUID/SETGID: entrypoint needs these to fix bind-mount ownership at startup —
+    # CHOWN/SETUID/SETGID: entrypoint needs these to fix volume ownership at startup —
     # upstream's own documented production config, not a hub deviation.
     security_opt:
       - no-new-privileges:true
