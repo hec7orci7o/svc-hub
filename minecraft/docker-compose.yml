@@ -14,6 +14,15 @@ services:
       - "25565:25565"
       - "24454:24454/udp"  # Simple Voice Chat
     env_file: ./.env
+    # Set directly here, not in minecraft.toml's environment block: Komodo's own
+    # environment-string parser only supports single-line values (confirmed: a literal
+    # backslash survives corrupted, always doubled, through its templating pipeline), so a
+    # real multi-line RCON_CMDS_STARTUP has to go through Compose's own YAML instead.
+    environment:
+      RCON_CMDS_STARTUP: |-
+        gamerule playersSleepingPercentage 50
+        chunky radius 2000
+        chunky start
     security_opt:
       - no-new-privileges:true
     cap_drop:

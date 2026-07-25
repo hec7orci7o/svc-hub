@@ -33,9 +33,6 @@ MODRINTH_PROJECTS=essentialsx?,vaultunlocked?,griefprevention?,chunky?,auraskill
 ENABLE_RCON=true
 RCON_PASSWORD=[[MINECRAFT_RCON_PASSWORD]]
 
-# Single line: rcon-cmds-daemon.sh pipes this through `echo -e`, so a backslash-n
-# separates commands — a real multi-line value here breaks Komodo's own environment-string
-# parsing before it ever reaches the container. TOML's own multi-line string would turn a
-# single backslash into a real newline too, hence the doubled backslash below.
-RCON_CMDS_STARTUP=gamerule playersSleepingPercentage 50\\nchunky radius 2000\\nchunky start
+# RCON_CMDS_STARTUP is set in docker-compose.yml instead: it needs a real multi-line
+# value, and this environment block's parser only supports single-line values.
 """
