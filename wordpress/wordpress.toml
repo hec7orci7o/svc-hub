@@ -5,7 +5,7 @@ tags = ["wordpress"]
 
 [stack.config]
 server = "lab57"
-links = ["wordpress.hectortoral.com"]
+links = ["https://wordpress.hectortoral.com"]
 linked_repo = "hec7orci7o/svc-hub"
 run_directory = "wordpress"
 file_paths = ["docker-compose.yml"]

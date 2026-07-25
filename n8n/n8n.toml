@@ -5,7 +5,7 @@ tags = ["n8n"]
 
 [stack.config]
 server = "lab56"
-links = ["n8n.hectortoral.com"]
+links = ["https://n8n.hectortoral.com"]
 linked_repo = "hec7orci7o/svc-hub"
 run_directory = "n8n"
 file_paths = ["docker-compose.yml"]

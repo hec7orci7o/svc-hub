@@ -6,6 +6,9 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-infisical}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Please set POSTGRES_PASSWORD in .env file}
       POSTGRES_DB: ${POSTGRES_DB:-infisical}
+      # postgres:18+ defaults PGDATA to a versioned subdir; without this it treats this
+      # mount as an unused legacy path and refuses to start (docker-library/postgres#1259).
+      PGDATA: /var/lib/postgresql/data
     # Not published to the host — only `infisical` below is reachable over the LAN.
     volumes:
       - db-data:/var/lib/postgresql/data

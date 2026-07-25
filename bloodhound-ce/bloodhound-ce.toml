@@ -5,7 +5,7 @@ tags = ["bloodhound", "security"]
 
 [stack.config]
 server = "lab58"
-links = ["bloodhound.hectortoral.com"]
+links = ["https://bloodhound.hectortoral.com"]
 linked_repo = "hec7orci7o/svc-hub"
 run_directory = "bloodhound-ce"
 file_paths = ["docker-compose.yml"]

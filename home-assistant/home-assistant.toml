@@ -5,7 +5,7 @@ tags = ["home-assistant"]
 
 [stack.config]
 server = "lab53"
-links = ["home-assistant.hectortoral.com"]
+links = ["https://home-assistant.hectortoral.com"]
 linked_repo = "hec7orci7o/svc-hub"
 run_directory = "home-assistant"
 file_paths = ["docker-compose.yml"]

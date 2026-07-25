@@ -5,7 +5,7 @@ tags = ["trek"]
 
 [stack.config]
 server = "lab56"
-links = ["trek.hectortoral.com"]
+links = ["https://trek.hectortoral.com"]
 linked_repo = "hec7orci7o/svc-hub"
 run_directory = "trek"
 file_paths = ["docker-compose.yml"]

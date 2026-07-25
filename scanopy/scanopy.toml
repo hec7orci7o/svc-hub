@@ -5,7 +5,7 @@ tags = ["scanopy"]
 
 [stack.config]
 server = "lab53"
-links = ["scanopy.hectortoral.com"]
+links = ["https://scanopy.hectortoral.com"]
 linked_repo = "hec7orci7o/svc-hub"
 run_directory = "scanopy"
 file_paths = ["docker-compose.yml"]

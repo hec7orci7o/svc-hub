@@ -5,7 +5,7 @@ tags = ["adguard", "dns"]
 
 [stack.config]
 server = "lab53"
-links = ["adguard.hectortoral.com"]
+links = ["https://adguard.hectortoral.com"]
 linked_repo = "hec7orci7o/svc-hub"
 run_directory = "adguard"
 file_paths = ["docker-compose.yml"]

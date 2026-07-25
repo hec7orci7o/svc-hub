@@ -5,7 +5,7 @@ tags = ["sysreptor", "security"]
 
 [stack.config]
 server = "lab58"
-links = ["sysreptor.hectortoral.com"]
+links = ["https://sysreptor.hectortoral.com"]
 linked_repo = "hec7orci7o/svc-hub"
 run_directory = "sysreptor"
 file_paths = ["docker-compose.yml"]

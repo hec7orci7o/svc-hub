@@ -5,7 +5,7 @@ tags = ["odoo"]
 
 [stack.config]
 server = "lab57"
-links = ["odoo.hectortoral.com"]
+links = ["https://odoo.hectortoral.com"]
 linked_repo = "hec7orci7o/svc-hub"
 run_directory = "odoo"
 file_paths = ["docker-compose.yml"]

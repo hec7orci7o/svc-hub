@@ -5,7 +5,7 @@ tags = ["infisical", "security"]
 
 [stack.config]
 server = "lab53"
-links = ["infisical.hectortoral.com"]
+links = ["https://infisical.hectortoral.com"]
 linked_repo = "hec7orci7o/svc-hub"
 run_directory = "infisical"
 file_paths = ["docker-compose.yml"]
