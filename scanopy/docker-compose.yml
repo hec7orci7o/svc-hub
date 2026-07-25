@@ -1,5 +1,4 @@
 # AGPL-3.0 for self-hosted use (see upstream repo for the commercial alternative).
-# mkdir -p data before first deploy.
 
 services:
   daemon:
@@ -67,7 +66,7 @@ services:
       SCANOPY_WEB_EXTERNAL_PATH: /app/static
       SCANOPY_INTEGRATED_DAEMON_URL: http://host.docker.internal:60073
     volumes:
-      - ./data:/data
+      - server-data:/data
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -90,6 +89,7 @@ services:
 volumes:
   postgres_data:
   daemon-config:
+  server-data:
 
 networks:
   scanopy:
