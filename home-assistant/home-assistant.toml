@@ -4,7 +4,7 @@ description = "Home Assistant — home automation (official homeassistant/home-a
 tags = ["home-assistant"]
 
 [stack.config]
-server = "lab54"
+server = "lab53"
 git_provider = "github.com"
 repo = "hec7orci7o/svc-hub"
 branch = "main"
