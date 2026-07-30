@@ -49,7 +49,7 @@ services:
       - no-new-privileges:true
 
   infisical:
-    image: infisical/infisical:v0.162.13
+    image: infisical/infisical:v0.162.15
     restart: unless-stopped
     depends_on:
       db:
