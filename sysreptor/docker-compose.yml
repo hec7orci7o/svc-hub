@@ -42,7 +42,7 @@ services:
       - ALL
 
   app:
-    image: syslifters/sysreptor:2026.58
+    image: syslifters/sysreptor:2026.61
     restart: unless-stopped
     init: true
     depends_on:

@@ -52,7 +52,7 @@ services:
       - no-new-privileges:true
 
   bloodhound:
-    image: specterops/bloodhound:9.4.0
+    image: specterops/bloodhound:9.5.1
     restart: unless-stopped
     depends_on:
       app-db:
