@@ -1,4 +1,7 @@
 # mkdir -p data && sudo chown -R 1000:1000 data   before first deploy.
+# ./config holds Fabric mod config files tracked in this repo — itzg copies /config into
+# /data/config on every startup (its own default), so a file committed here overwrites
+# whatever the mod generated.
 # Non-root (user: 1000:1000) is unverified against itzg's entrypoint — if startup fails on a
 # root-only step, drop `user:` below and add `cap_add: [CHOWN, SETUID, SETGID]` instead.
 
@@ -29,9 +32,10 @@ services:
       - ALL
     volumes:
       - ./data:/data
+      - ./config:/config:ro
     healthcheck:
       test: ["CMD-SHELL", "mc-health"]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 600s  # first boot: jar + world-gen + downloading plugins + pregen kickoff, on a Pi
+      start_period: 600s  # first boot: downloading the ~366-file modpack + world-gen + pregen kickoff, on a Pi

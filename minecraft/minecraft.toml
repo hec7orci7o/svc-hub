@@ -16,19 +16,17 @@ TZ=Europe/Madrid
 
 EULA=TRUE
 
-TYPE=PURPUR
-VERSION=LATEST
+TYPE=MODRINTH
+MODRINTH_MODPACK=homestead
+MODRINTH_VERSION=1.3.7
+VERSION=1.20.1
+MODRINTH_PROJECTS=time-control
 
 MEMORY=4G
 
 MAX_PLAYERS=10
 DIFFICULTY=normal
 MOTD=A Minecraft Server
-
-# All marked optional (trailing ?): with VERSION=LATEST, any of these can lag behind the
-# newest MC release on Modrinth (already hit griefprevention, then essentialsx) — optional
-# skips a plugin with a warning instead of failing the whole boot over one laggard.
-MODRINTH_PROJECTS=essentialsx?,vaultunlocked?,griefprevention?,chunky?,auraskills?,healthbar?,silkspawners?,viaversion?,simple-voice-chat?,quickshop-hikari?,grimac?
 
 ENABLE_RCON=true
 RCON_PASSWORD=[[MINECRAFT_RCON_PASSWORD]]

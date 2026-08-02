@@ -1,0 +1,13 @@
+{
+  "system_time": {
+    "sync_to_system_time": false,
+    "sync_to_system_time_rate": 20
+  },
+  "arbitrary_time": {
+    "day_length_minutes": 30,
+    "night_length_minutes": 15
+  },
+  "miscellaneous": {
+    "debug": false
+  }
+}
