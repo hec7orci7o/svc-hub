@@ -1,7 +1,6 @@
 # mkdir -p data && sudo chown -R 1000:1000 data   before first deploy.
-# ./config holds Fabric mod config files tracked in this repo — itzg copies /config into
-# /data/config on every startup (its own default), so a file committed here overwrites
-# whatever the mod generated.
+# Switching modpack/loader (e.g. Fabric->Forge): old world+mods in ./data aren't compatible —
+# rm -rf data/* on the host first so itzg regenerates it clean.
 # Non-root (user: 1000:1000) is unverified against itzg's entrypoint — if startup fails on a
 # root-only step, drop `user:` below and add `cap_add: [CHOWN, SETUID, SETGID]` instead.
 
@@ -32,7 +31,6 @@ services:
       - ALL
     volumes:
       - ./data:/data
-      - ./config:/config:ro
     healthcheck:
       test: ["CMD-SHELL", "mc-health"]
       interval: 30s
