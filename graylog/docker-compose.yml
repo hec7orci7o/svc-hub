@@ -1,0 +1,86 @@
+# Single-node Graylog + OpenSearch + MongoDB — a practice lab for the Graylog Academy
+# courses, not a replica of a production HA cluster (that'd need 3x each of Graylog,
+# OpenSearch, and a Mongo replica set — too heavy for a Pi). Named volumes only, no bind
+# mounts, so no mkdir step before first deploy.
+
+services:
+  mongodb:
+    image: mongo:6.0.18
+    restart: unless-stopped
+    # Not published to the host — only graylog below is reachable over the LAN.
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+
+  opensearch:
+    # Graylog docs: do not run OpenSearch 3.0+, only the 2.x line is supported.
+    image: opensearchproject/opensearch:2.15.0
+    restart: unless-stopped
+    environment:
+      OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
+      discovery.type: single-node
+      action.auto_create_index: "false"
+      # Graylog OSS talks to OpenSearch unauthenticated; the security plugin stays off and
+      # the port stays unpublished (below) as the actual access control.
+      plugins.security.disabled: "true"
+    # Not published to the host, same reasoning as mongodb.
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    security_opt:
+      - no-new-privileges:true
+
+  graylog:
+    image: graylog/graylog:6.3.13-1
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+    ports:
+      - "9000:9000/tcp"   # Web UI / API
+      - "5044:5044/tcp"   # Beats input
+      - "5140:5140/tcp"   # Syslog TCP
+      - "5140:5140/udp"   # Syslog UDP
+      - "12201:12201/tcp" # GELF TCP
+      - "12201:12201/udp" # GELF UDP
+    environment:
+      GRAYLOG_NODE_ID_FILE: /usr/share/graylog/data/config/node-id
+      GRAYLOG_HTTP_BIND_ADDRESS: 0.0.0.0:9000
+      GRAYLOG_ELASTICSEARCH_HOSTS: http://opensearch:9200
+      GRAYLOG_MONGODB_URI: mongodb://mongodb:27017/graylog
+      GRAYLOG_PASSWORD_SECRET: ${GRAYLOG_PASSWORD_SECRET:?Please set GRAYLOG_PASSWORD_SECRET in .env file}
+      GRAYLOG_ROOT_PASSWORD_SHA2: ${GRAYLOG_ROOT_PASSWORD_SHA2:?Please set GRAYLOG_ROOT_PASSWORD_SHA2 in .env file}
+      GRAYLOG_HTTP_EXTERNAL_URI: ${GRAYLOG_HTTP_EXTERNAL_URI:-http://127.0.0.1:9000/}
+    volumes:
+      - graylog_data:/usr/share/graylog/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/api/system/lbstatus || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+volumes:
+  mongodb_data:
+  mongodb_config:
+  opensearch_data:
+  graylog_data:

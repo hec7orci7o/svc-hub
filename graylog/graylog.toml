@@ -1,0 +1,18 @@
+[[stack]]
+name = "graylog"
+description = "Graylog SIEM lab (single-node Graylog + OpenSearch + MongoDB) for practicing Graylog Academy courses locally"
+tags = ["graylog", "security", "lab"]
+
+[stack.config]
+server = "lab54"
+linked_repo = "hec7orci7o/svc-hub"
+run_directory = "graylog"
+file_paths = ["docker-compose.yml"]
+registry_provider = "docker.io"
+registry_account = "hec7or"
+
+environment = """
+GRAYLOG_PASSWORD_SECRET=[[GRAYLOG_PASSWORD_SECRET]]
+GRAYLOG_ROOT_PASSWORD_SHA2=[[GRAYLOG_ROOT_PASSWORD_SHA2]]
+GRAYLOG_HTTP_EXTERNAL_URI=[[GRAYLOG_HTTP_EXTERNAL_URI]]
+"""
