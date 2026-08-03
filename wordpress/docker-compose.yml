@@ -38,8 +38,7 @@ services:
       WORDPRESS_DB_NAME: ${MARIADB_DATABASE:-wordpress}
       WORDPRESS_DB_USER: ${MARIADB_USER:-wordpress}
       WORDPRESS_DB_PASSWORD: ${MARIADB_PASSWORD:?Please set MARIADB_PASSWORD in .env file}
-      # Traefik terminates TLS in front of this; without this WordPress thinks every request
-      # is plain HTTP and redirect-loops / serves mixed content on the admin and checkout pages.
+      # Without this, Traefik's TLS termination looks like plain HTTP to WordPress and it redirect-loops.
       WORDPRESS_CONFIG_EXTRA: |
         define('FORCE_SSL_ADMIN', true);
         if (isset($$_SERVER['HTTP_X_FORWARDED_PROTO']) && $$_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
@@ -62,9 +61,7 @@ services:
         max-file: "3"
     security_opt:
       - no-new-privileges:true
-    # No cap_drop: apache's master process needs to stay root to setuid/setgid its workers
-    # down to www-data and chown wp-content on first boot — not the Postgres/Mariadb case,
-    # but the same root-at-startup shape.
+    # No cap_drop: apache needs to stay root at startup to setuid its workers to www-data and chown wp-content.
 
 volumes:
   db_data:

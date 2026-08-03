@@ -1,7 +1,5 @@
 # mkdir -p addons before first deploy.
-# No odoo.conf: admin_passwd/workers/memory limits have no env-var equivalent and Komodo
-# can't auto-write arbitrary config files. Runs on Odoo's own defaults (admin_passwd=
-# "admin", workers=0) — change the master password at /web/database/manager after boot.
+# No odoo.conf: runs on Odoo's defaults (admin_passwd="admin") — change it at /web/database/manager after boot.
 
 services:
   db:

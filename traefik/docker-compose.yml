@@ -15,8 +15,7 @@ services:
       - --entrypoints.websecure.http.tls.domains[0].sans=*.${DOMAIN}
       - --certificatesresolvers.cloudflare.acme.dnschallenge=true
       - --certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare
-      # Propagation check needs a resolver that isn't the LAN's own (AdGuard) — confirmed in
-      # production: it never saw the fresh TXT record, timing the challenge out.
+      # Propagation check needs a resolver that isn't the LAN's own (AdGuard), or it never sees the fresh TXT record.
       - --certificatesresolvers.cloudflare.acme.dnschallenge.resolvers=1.1.1.1:53,8.8.8.8:53
       - --certificatesresolvers.cloudflare.acme.email=${ACME_EMAIL}
       - --certificatesresolvers.cloudflare.acme.storage=/letsencrypt/acme.json

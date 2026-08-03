@@ -5,8 +5,7 @@ services:
     restart: unless-stopped
     # AirPrint/Bonjour mDNS broadcasts don't cross a bridge network.
     network_mode: host
-    # privileged: true is required for USB passthrough + Avahi/dbus; no-new-privileges/
-    # cap_drop are moot under it, not an oversight.
+    # privileged: true required for USB passthrough + Avahi/dbus — no-new-privileges/cap_drop are moot under it.
     privileged: true
     env_file: ./.env
     logging:

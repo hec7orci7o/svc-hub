@@ -1,7 +1,5 @@
-# NOT DEPLOYED YET, ON PURPOSE: a manual tunnel (unpinned :latest) predating this hub is
-# already running. This Stack's /deploy webhook is deliberately unregistered in GitHub —
-# deploying without first migrating the real TUNNEL_TOKEN and retiring the manual one means
-# two tunnels running at once.
+# NOT DEPLOYED YET, ON PURPOSE: a manual tunnel predates this hub and is still running.
+# /deploy webhook stays unregistered until TUNNEL_TOKEN is migrated and the manual one retired.
 #
 # Every Public Hostname must target Traefik (lab53:443), never a backend origin directly.
 

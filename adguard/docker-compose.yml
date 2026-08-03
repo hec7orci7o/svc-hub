@@ -3,8 +3,7 @@
 #   printf '[Resolve]\nDNS=127.0.0.1\nDNSStubListener=no\n' | sudo tee /etc/systemd/resolved.conf.d/adguardhome.conf
 #   sudo mv /etc/resolv.conf /etc/resolv.conf.backup && sudo ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
 #   sudo systemctl reload-or-restart systemd-resolved
-# Then restart any other already-running container — Docker's embedded resolver caches the
-# host's DNS address at container start (confirmed in production: broke Komodo's own DNS).
+# Then restart any other already-running container — Docker caches the host's DNS address at container start.
 #
 # No env vars/config file: admin credentials are set once via the setup wizard on :3000.
 #
@@ -35,8 +34,7 @@ services:
       options:
         max-size: 10m
         max-file: "3"
-    # No cap_drop: needs NET_BIND_SERVICE (port 53) + DAC_OVERRIDE (data volume ownership),
-    # confirmed in production. Upstream's own docker run example doesn't drop capabilities.
+    # No cap_drop: needs NET_BIND_SERVICE (port 53) + DAC_OVERRIDE (data volume ownership).
     security_opt:
       - no-new-privileges:true
 

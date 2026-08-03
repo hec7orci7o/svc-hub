@@ -1,18 +1,15 @@
 # mkdir -p config before first deploy.
-# Bridged port (8123), not network_mode: host — matches how every other service here is
-# exposed via Traefik. Trade-off: SSDP/mDNS discovery (HomeKit, Sonos, some Zigbee bridges)
-# won't cross the bridge network.
+# Bridged port (8123), not host networking — matches Traefik exposure for every other service here;
+# trade-off is SSDP/mDNS discovery (HomeKit, Sonos, some Zigbee bridges) won't cross the bridge network.
 #
-# After first boot, add to config/configuration.yaml (HA rejects reverse-proxied requests
-# otherwise): http: { use_x_forwarded_for: true, trusted_proxies: [192.168.1.53] }  # lab53, Traefik
+# After first boot, add to config/configuration.yaml (HA rejects reverse-proxied requests otherwise):
+# http: { use_x_forwarded_for: true, trusted_proxies: [192.168.1.53] }  # lab53, Traefik
 
 services:
   home-assistant:
     image: homeassistant/home-assistant:2026.7.4
     restart: unless-stopped
-    # No `user:` — Home Assistant Container doesn't officially support a non-root UID (some
-    # integrations expect root-level device/network access). cap_drop:[ALL] + no-new-privileges
-    # mitigate; revisit if a non-root mode is ever confirmed workable.
+    # No `user:` — Home Assistant Container doesn't officially support a non-root UID.
     ports:
       - "8123:8123"
     env_file: ./.env
@@ -20,6 +17,10 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    # The `dhcp` integration opens a raw socket to watch DHCP traffic for device discovery.
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8123/manifest.json"]
       interval: 30s

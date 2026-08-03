@@ -1,8 +1,6 @@
 services:
   mongo:
-    # ponytail: Mongo 5.0+ needs ARMv8.2-A; Pi 4 (Cortex-A72) is only ARMv8.0-A, so :latest
-    # SIGILL-crashes. 4.4.18 is the last arm64 build that runs here (EOL, unpatched).
-    # Upgrade path: a Pi 5 (ARMv8.2-A) or non-Pi host.
+    # ponytail: pinned to 4.4, Mongo 5+ needs ARMv8.2-A which Pi 4 lacks. Upgrade path: Pi 5 or non-Pi host.
     image: mongo:4.4.30
     labels:
       komodo.skip:

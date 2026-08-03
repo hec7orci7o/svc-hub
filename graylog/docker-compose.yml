@@ -1,7 +1,5 @@
-# Single-node Graylog + OpenSearch + MongoDB — a practice lab for the Graylog Academy
-# courses, not a replica of a production HA cluster (that'd need 3x each of Graylog,
-# OpenSearch, and a Mongo replica set — too heavy for a Pi). Named volumes only, no bind
-# mounts, so no mkdir step before first deploy.
+# Single-node Graylog + OpenSearch + MongoDB — a practice lab for Graylog Academy, not a
+# production HA replica (that'd need 3x each, too heavy for a Pi). No bind mounts, no mkdir step.
 
 services:
   mongodb:
@@ -28,8 +26,7 @@ services:
       OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
       discovery.type: single-node
       action.auto_create_index: "false"
-      # Graylog OSS talks to OpenSearch unauthenticated; the security plugin stays off and
-      # the port stays unpublished (below) as the actual access control.
+      # Graylog OSS talks to OpenSearch unauthenticated; the unpublished port is the real access control.
       plugins.security.disabled: "true"
     # Not published to the host, same reasoning as mongodb.
     volumes:
