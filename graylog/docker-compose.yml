@@ -20,7 +20,7 @@ services:
 
   opensearch:
     # Graylog docs: do not run OpenSearch 3.0+, only the 2.x line is supported.
-    image: opensearchproject/opensearch:2.19.6
+    image: opensearchproject/opensearch:3.8.0
     restart: unless-stopped
     environment:
       OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
