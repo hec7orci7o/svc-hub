@@ -3,7 +3,7 @@
 services:
   daemon:
     # Pre-1.0 (0.x): minor bumps excluded from automerge in renovate.json.
-    image: ghcr.io/scanopy/scanopy/daemon:v0.17.7
+    image: ghcr.io/scanopy/scanopy/daemon:v0.17.9
     restart: unless-stopped
     # LAN topology discovery needs the real network segment, not a bridge.
     network_mode: host
@@ -55,7 +55,7 @@ services:
 
   server:
     # Pre-1.0 (0.x): see the note on the daemon image above.
-    image: ghcr.io/scanopy/scanopy/server:v0.17.7
+    image: ghcr.io/scanopy/scanopy/server:v0.17.9
     restart: unless-stopped
     ports:
       - "60072:60072"
