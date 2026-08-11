@@ -3,7 +3,7 @@
 
 services:
   mongodb:
-    image: mongo:6.0.28
+    image: mongo:8.3.8
     restart: unless-stopped
     # Not published to the host — only graylog below is reachable over the LAN.
     volumes:
