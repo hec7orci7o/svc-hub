@@ -48,7 +48,7 @@ services:
       - no-new-privileges:true
 
   infisical:
-    image: infisical/infisical:v0.162.16
+    image: infisical/infisical:v0.162.19
     restart: unless-stopped
     depends_on:
       db:
