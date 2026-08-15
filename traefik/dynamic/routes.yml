@@ -100,10 +100,11 @@ http:
               - '*.{{ env "DOMAIN" }}'
         options: modern@file
 
-    # Public by design like n8n: an ecommerce storefront needs to be reachable from outside
-    # the LAN. Needs a real cloudflared Public Hostname + AdGuard rewrite to actually go live.
+    # Public by design like n8n: WaaS tenants need to be reachable from outside the LAN.
+    # HostRegexp (not Host) so *.waas.$DOMAIN tenant subdomains match too, not just the apex.
+    # Needs a real cloudflared Public Hostname (wildcard) + AdGuard rewrite to actually go live.
     wordpress:
-      rule: 'Host(`wordpress.{{ env "DOMAIN" }}`)'
+      rule: 'HostRegexp(`^([a-z0-9-]+\.)?waas\.{{ env "DOMAIN" }}$`)'
       entryPoints: [websecure]
       service: wordpress
       middlewares: [security-headers]
@@ -113,6 +114,9 @@ http:
           - main: '{{ env "DOMAIN" }}'
             sans:
               - '*.{{ env "DOMAIN" }}'
+              # *.$DOMAIN only covers one label (waas.$DOMAIN itself) — tenant subdomains
+              # are a second level and need their own SAN.
+              - '*.waas.{{ env "DOMAIN" }}'
         options: modern@file
 
     # Public: only /listener/* (GitHub webhook path), so GitHub can reach /deploy without
