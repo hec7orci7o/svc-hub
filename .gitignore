@@ -9,6 +9,8 @@ odoo/addons/
 trek/data/
 trek/uploads/
 scanopy/data/
+opengym/data/
+opengym/media/
 
 # Scratch (may contain real secrets pasted during migration/debugging — never commit)
 .scratch/

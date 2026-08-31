@@ -1,0 +1,69 @@
+# mkdir -p data media/img media/gif before first deploy.
+
+name: opengym
+
+services:
+  # One-time: download the exercise images + GIFs into ./media (skipped if already there).
+  # ~140 MB, from github.com/hasaneyldrm/exercises-dataset — images/GIFs are © Gym visual,
+  # used under that dataset's terms, not openGym's AGPL. See upstream NOTICE.md.
+  media:
+    image: alpine/git:2.54.0
+    volumes:
+      - ./media/img:/out/img
+      - ./media/gif:/out/gif
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        if [ -z "$$(ls -A /out/img 2>/dev/null)" ]; then
+          git clone https://github.com/hasaneyldrm/exercises-dataset /tmp/ds \
+            && git -C /tmp/ds checkout 7455efae41b330c265e7cd4b78dfa848e7ce5ebd \
+            && cp /tmp/ds/images/*.jpg /out/img/ && cp /tmp/ds/videos/*.gif /out/gif/ \
+            || echo "exercise media download failed, continuing without it" >&2
+        fi
+    restart: "no"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  # Passkey auth + per-user data (Node, no framework).
+  api:
+    image: registry.gitlab.com/duartesantos8/opengym/api:1.2.14
+    restart: unless-stopped
+    env_file: ./.env
+    environment:
+      - PORT=${PORT:-3000}
+      - DATA_DIR=/data
+    volumes:
+      - ./data:/data         # users, passkeys, per-user state, session secret — BACK THIS UP
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  # Serves the frontend and proxies /api → api; single origin so passkeys work.
+  web:
+    image: registry.gitlab.com/duartesantos8/opengym/web:1.2.14
+    restart: unless-stopped
+    depends_on:
+      media:
+        condition: service_completed_successfully
+      api:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-8080}:${NGINX_PORT:-80}"
+    environment:
+      - NGINX_PORT=${NGINX_PORT:-80}
+      - BACKEND=${BACKEND:-api}
+      - PORT=${PORT:-3000}
+      - CF_CONNECTING_IP=${CF_CONNECTING_IP:-}
+    # Both images ship their own HEALTHCHECK (api: /api/health; web: probes the container's
+    # actual NGINX_PORT over 127.0.0.1, not a hardcoded :80/localhost) — no override needed.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # cap_drop: ALL removes NET_BIND_SERVICE too, and that's needed to bind the <1024 container
+    # port even as root once capabilities (not just UID) are what's being checked.
+    cap_add:
+      - NET_BIND_SERVICE
