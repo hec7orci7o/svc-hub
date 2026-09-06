@@ -28,7 +28,7 @@ services:
 
   # Passkey auth + per-user data (Node, no framework).
   api:
-    image: registry.gitlab.com/duartesantos8/opengym/api:1.2.14
+    image: registry.gitlab.com/duartesantos8/opengym/api:1.3.5
     restart: unless-stopped
     env_file: ./.env
     environment:
@@ -43,7 +43,7 @@ services:
 
   # Serves the frontend and proxies /api → api; single origin so passkeys work.
   web:
-    image: registry.gitlab.com/duartesantos8/opengym/web:1.2.14
+    image: registry.gitlab.com/duartesantos8/opengym/web:1.3.5
     restart: unless-stopped
     depends_on:
       media:
