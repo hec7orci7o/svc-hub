@@ -7,7 +7,7 @@
 
 services:
   home-assistant:
-    image: homeassistant/home-assistant:2026.8.3
+    image: homeassistant/home-assistant:2026.9.1
     restart: unless-stopped
     # No `user:` — Home Assistant Container doesn't officially support a non-root UID.
     ports:

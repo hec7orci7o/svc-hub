@@ -1,6 +1,6 @@
 services:
   trek:
-    image: mauriceboe/trek:4.1.1
+    image: mauriceboe/trek:4.2.1
     restart: unless-stopped
     read_only: true
     # CHOWN/SETUID/SETGID: entrypoint needs these to fix volume ownership at startup.
