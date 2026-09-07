@@ -41,7 +41,7 @@ services:
       - no-new-privileges:true
 
   graylog:
-    image: graylog/graylog:7.1.8-1
+    image: graylog/graylog:7.1.9-1
     restart: unless-stopped
     depends_on:
       mongodb:
