@@ -3,7 +3,7 @@
 
 services:
   mongodb:
-    image: mongo:8.3.9
+    image: mongo:8.3.11
     restart: unless-stopped
     # Not published to the host — only graylog below is reachable over the LAN.
     volumes:
@@ -20,7 +20,7 @@ services:
 
   opensearch:
     # Graylog docs: do not run OpenSearch 3.0+, only the 2.x line is supported.
-    image: opensearchproject/opensearch:3.8.0
+    image: opensearchproject/opensearch:3.9.0
     restart: unless-stopped
     environment:
       OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
@@ -41,7 +41,7 @@ services:
       - no-new-privileges:true
 
   graylog:
-    image: graylog/graylog:7.1.9-1
+    image: graylog/graylog:7.1.10-1
     restart: unless-stopped
     depends_on:
       mongodb:
