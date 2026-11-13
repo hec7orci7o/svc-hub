@@ -3,7 +3,7 @@
 
 services:
   mongodb:
-    image: mongo:9.0.4
+    image: mongo:9.0.8
     restart: unless-stopped
     # Not published to the host — only graylog below is reachable over the LAN.
     volumes:
@@ -41,7 +41,7 @@ services:
       - no-new-privileges:true
 
   graylog:
-    image: graylog/graylog:7.2.1-1
+    image: graylog/graylog:7.2.2-1
     restart: unless-stopped
     depends_on:
       mongodb:
