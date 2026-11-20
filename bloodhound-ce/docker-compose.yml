@@ -1,6 +1,6 @@
 services:
   app-db:
-    image: postgres:18
+    image: postgres:19
     restart: unless-stopped
     environment:
       PGUSER: ${POSTGRES_USER:-bloodhound}
