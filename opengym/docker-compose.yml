@@ -7,7 +7,7 @@ services:
   # ~140 MB, from github.com/hasaneyldrm/exercises-dataset — images/GIFs are © Gym visual,
   # used under that dataset's terms, not openGym's AGPL. See upstream NOTICE.md.
   media:
-    image: alpine/git:2.54.0
+    image: alpine/git:v2.54.1
     volumes:
       - ./media/img:/out/img
       - ./media/gif:/out/gif
