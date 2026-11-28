@@ -1,6 +1,6 @@
 services:
   db:
-    image: mariadb:13.0
+    image: mariadb:13.1
     restart: unless-stopped
     environment:
       MARIADB_DATABASE: ${MARIADB_DATABASE:-wordpress}
